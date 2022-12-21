@@ -1,0 +1,3 @@
+/home/quothbonney/projects/gpgc/cmake-build-debug/CMakeFiles/gpgc.dir
+/home/quothbonney/projects/gpgc/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/quothbonney/projects/gpgc/cmake-build-debug/CMakeFiles/rebuild_cache.dir
