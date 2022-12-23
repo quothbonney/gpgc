@@ -27,25 +27,25 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 15,
+				"line" : 16,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 17,
+				"line" : 18,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 10,
+				"line" : 11,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 19,
+				"line" : 20,
 				"parent" : 0
 			}
 		]
@@ -68,6 +68,11 @@
 					"backtrace" : 3,
 					"isSystem" : true,
 					"path" : "/usr/include/gdal"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/usr/include/eigen3"
 				}
 			],
 			"language" : "CXX",

@@ -1114,6 +1114,18 @@
 			"value" : "FALSE"
 		},
 		{
+			"name" : "Eigen3_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "The directory containing a CMake configuration file for Eigen3."
+				}
+			],
+			"type" : "PATH",
+			"value" : "/usr/lib/cmake/eigen3"
+		},
+		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_GDAL",
 			"properties" : 
 			[
