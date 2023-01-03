@@ -1,6 +1,10 @@
 Debug/
 compile_commands.json
 .git/
+.idea/
+.cache/
+unit1.tif
+test.gpgc
 Testing/
 half.pp
 nohup.out
