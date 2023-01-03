@@ -1,14 +1,20 @@
 from osgeo import gdal
 from osgeo import osr
 import sys
+import os
 import numpy
 
 if __name__ == '__main__':
-    ds = gdal.Open(sys.argv[1])
-    band = ds.GetRasterBand(1)
-    nw_partition = band.ReadAsArray(0, 0, 512, 512);
-    dst_filename = "out.tif" 
+    input = sys.argv[1];
+    size = int(sys.argv[2])
+    output = sys.argv[3];
 
+    ds = gdal.Open(input)
+    band = ds.GetRasterBand(1)
+    nw_partition = band.ReadAsArray(0, 0, size, size);
+    dst_filename = output 
+    
+    os.system(f"touch {output}")
     fileformat = "GTiff"
     driver = gdal.GetDriverByName(fileformat)
     metadata = driver.GetMetadata()
@@ -19,7 +25,7 @@ if __name__ == '__main__':
     if metadata.get(gdal.DCAP_CREATECOPY) == "YES":
         print("Driver {} supports CreateCopy() method.".format(fileformat))
 
-    dst_ds = driver.Create(dst_filename, xsize=512, ysize=512,
+    dst_ds = driver.Create(dst_filename, xsize=size, ysize=size,
                     bands=1, eType=gdal.GDT_Byte)
 
     
@@ -33,5 +39,3 @@ if __name__ == '__main__':
     print("Done.")
     # Once we're done, close properly the dataset
     dst_ds = None
-
-

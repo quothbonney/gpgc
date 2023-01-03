@@ -12,3 +12,4 @@ half.pp
 nohup.out
 cmake-build-debug/
 output.txt
+*.tif

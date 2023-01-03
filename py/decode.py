@@ -12,7 +12,7 @@ if __name__ == '__main__':
     x0 = [0]
     y0 = [0]
 
-    with open("output.txt") as gpgc:
+    with open(sys.argv[1]) as gpgc:
         for line in gpgc:
             words = line.split(" ")
             #data.append((int(words[3]), (float(words[0]), float(words[1]), int(words[2]))));

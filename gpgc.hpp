@@ -12,8 +12,10 @@
 #include "half/half/half.hpp"
 #include "gdal_priv.h"
 
-#define	GPGC_ZETA 0.3
 #define GPGC_HEADER_SIZE 8 
+
+int gpgc_mu;
+int gpgc_zeta;
 
 struct gpgc_header_t {
 	uint32_t width;
@@ -45,6 +47,7 @@ typedef struct {
 
 void gpgc_encode_64(gpgc_encoder *_gpe, const uint64_t &serialized);
 void gpgc_easy_write(gpgc_encoder *_gpe, gpgc_vector fit, int size);
+double inverse_z_transform(double z_score);
 
 struct gpgc_partition {
 	int xOff, yOff, size;
@@ -68,9 +71,9 @@ private:
 			for(size_t cell = 0; cell < size; ++cell) {
 				float expected = (vec.i * row) + (vec.j * cell) + vec.k; // In form ax_by_z for vector
 				float cell_diff = expected - bmp[yOff + row][xOff + cell]; // Get difference
-				float score = std::abs(cell_diff / 30); // Assuming sigma = 30 for z score, arbitrary
-				float P_ak = 1 / std::pow(4.0, score); // Arbitrary formula TODO: update
-				float point_info = -1 * std::log2(P_ak); // Shannon info formula
+				float score = std::abs(cell_diff / gpgc_mu); 
+				float P_ak = inverse_z_transform(score);
+				float point_info = -1 * std::log2(2.56*P_ak); // Shannon info formula
 
 				info += point_info;
 			}
@@ -81,7 +84,7 @@ private:
 	}
 
 	void subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector) {
-		if(entropy > GPGC_ZETA &&  size >= 4) {
+		if(entropy > gpgc_zeta &&  size >= 4) {
 			int new_size = size / 2;
 
 			gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe);
@@ -159,6 +162,17 @@ gpgc_gdal_data process_file(const char* filename) {
     return working;
 }
 
+inline double inverse_z_transform(double z_score) {
+	auto inverse_function = [](double z) -> double {
+		double pi = 3.1415;
+		return (1 / std::sqrt(2*pi)) * std::exp(-(z*z)/2);
+	};
+
+	double upper = inverse_function(z_score);
+
+	return upper;
+}
+
 uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
 	auto** block = new uint16_t*[rData->height];
 	for(int row = 0; row < rData->height; ++row) { 
@@ -170,11 +184,14 @@ uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
 	return block;
 }
 
-void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat) {
+void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu) {
     gpgc_encoder gpe{
             (unsigned char *) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
             0
     };
+	
+	gpgc_mu = mu;
+	gpgc_zeta = zeta;
 
 	std::stringstream fname;
 	fname << std::filesystem::current_path().c_str() << "/" << out_filename;
