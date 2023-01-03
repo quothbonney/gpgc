@@ -2,14 +2,15 @@
 #define GPGC_H
 
 #include <cstdint>
-#include "gdal_priv.h"
-#include <gdal.h>
 #include <ostream>
 #include <stdio.h>
-#include "half/half/half.hpp"
 #include <iostream>
+#include <string>
 #include <eigen3/Eigen/Dense>
 #include <fstream>
+#include <filesystem>
+#include "half/half/half.hpp"
+#include "gdal_priv.h"
 
 #define	GPGC_ZETA 0.3
 #define GPGC_HEADER_SIZE 8 
@@ -169,12 +170,17 @@ uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
 	return block;
 }
 
-void* gpgc_encode(char* filename, const gpgc_gdal_data& _dat) {
+void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat) {
     gpgc_encoder gpe{
             (unsigned char *) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
             0
     };
-	gpe.ez_enc.open("./output.txt");
+
+	std::stringstream fname;
+	fname << std::filesystem::current_path().c_str() << "/" << out_filename;
+    FILE* f = fopen(fname.str().c_str(), "wb");
+	
+	gpe.ez_enc.open(fname.str() + ".log");
 
 	gpgc_header_t magic_header {
 		_dat.width,
@@ -189,7 +195,6 @@ void* gpgc_encode(char* filename, const gpgc_gdal_data& _dat) {
 	gpgc_encode_64(&gpe, serialized_header);
     gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe);
 
-    FILE* f = fopen("test.gpgc", "wb");
     fwrite(gpe.bytestream, 1, gpe.p, f);
     free(gpe.bytestream);
 	gpe.ez_enc.close();

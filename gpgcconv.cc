@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 	
 	if(STR_ENDS_WITH(argv[1], ".tif")) {
 		gpgc_gdal_data dat = process_file(argv[1]);
-		gpgc_encode(argv[2], dat);
+		gpgc_encode(argv[1], argv[2], dat);
 	}
 
 	return 0;
