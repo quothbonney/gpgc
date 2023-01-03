@@ -6,7 +6,7 @@
 #include <gdal.h>
 #include <ostream>
 #include <stdio.h>
-#include "half.hpp"
+#include "half/half/half.hpp"
 #include <iostream>
 #include <eigen3/Eigen/Dense>
 #include <fstream>
@@ -46,12 +46,12 @@ void gpgc_encode_64(gpgc_encoder *_gpe, const uint64_t &serialized);
 void gpgc_easy_write(gpgc_encoder *_gpe, gpgc_vector fit, int size);
 
 struct gpgc_partition {
-	int xOff, yOff, height, width;
-	
+	int xOff, yOff, size;
+
 	uint16_t** bmp;
 
-	gpgc_partition(int _height, int _width, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
-	: height(_height), width(_width), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
+	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
+	: size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
 		const float* _partition_block = get_block();
         const gpgc_vector fit = fit_vector(_partition_block);
         float entropy = get_entropy(fit, _partition_block);
@@ -63,34 +63,32 @@ private:
 
 	float get_entropy(const gpgc_vector& vec, const float* block) const {
 		unsigned long info = 0;
-		for(size_t row = 0; row < height; ++row) {
-			for(size_t cell = 0; cell < width; ++cell) {
+		for(size_t row = 0; row < size; ++row) {
+			for(size_t cell = 0; cell < size; ++cell) {
 				float expected = (vec.i * row) + (vec.j * cell) + vec.k; // In form ax_by_z for vector
 				float cell_diff = expected - bmp[yOff + row][xOff + cell]; // Get difference
 				float score = std::abs(cell_diff / 30); // Assuming sigma = 30 for z score, arbitrary
 				float P_ak = 1 / std::pow(4.0, score); // Arbitrary formula TODO: update
 				float point_info = -1 * std::log2(P_ak); // Shannon info formula
-				
+
 				info += point_info;
 			}
 		}
-		float adjusted_info = (long double)info / (height*width);
+		float adjusted_info = (long double)info / (size*size);
 
 		return adjusted_info;
 	}
 
 	void subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector) {
-		if(entropy > GPGC_ZETA && height >= 4 && width >= 4) {
-			int new_size1, new_size2;
-			new_size1 = (int)std::max(width, height)/ 2;
-			new_size2 = std::max(width, height)- new_size1;
+		if(entropy > GPGC_ZETA &&  size >= 4) {
+			int new_size = size / 2;
 
-			gpgc_partition child1 = gpgc_partition(new_size1, new_size1, xOff, yOff, bmp, _gpe);
-			gpgc_partition child2 = gpgc_partition(new_size1, new_size2, xOff + new_size1, yOff, bmp, _gpe);
-			gpgc_partition child3 = gpgc_partition(new_size2, new_size1, xOff, yOff + new_size2, bmp, _gpe);
-			gpgc_partition child4 = gpgc_partition(new_size2, new_size2, xOff + new_size1, yOff + new_size1, bmp, _gpe);
+			gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe);
+			gpgc_partition child2 = gpgc_partition(new_size, xOff + new_size, yOff, bmp, _gpe);
+			gpgc_partition child3 = gpgc_partition(new_size, xOff, yOff + new_size, bmp, _gpe);
+			gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe);
 		} else {
-			std::cout << "Encoded leaf node with size " << height << " " width << " at " << xOff << " " << yOff <<  ". Entropy=" << entropy << "\n";
+			std::cout << "Encoded leaf node with size " << size << " at " << xOff << " " << yOff <<  ". Entropy=" << entropy << "\n";
 
             uint64_t encoded_int;
             memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
@@ -149,10 +147,10 @@ gpgc_gdal_data process_file(const char* filename) {
 	GDALAllRegister();
 	GDALDataset* poDataset;
 	gpgc_gdal_data working;
-	
+
 	poDataset = (GDALDataset*)GDALOpen(filename, GA_ReadOnly);
 	working.rBand = poDataset->GetRasterBand(1);
-	
+
 	working.width = working.rBand->GetXSize();
 	working.height= working.rBand->GetYSize();
 	poDataset->GetGeoTransform(working.rHeaderData);
