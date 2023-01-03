@@ -1,6 +1,8 @@
 Debug/
 compile_commands.json
 .git/
+*.gpgc
+*.gpgc.log
 .idea/
 .cache/
 unit1.tif
