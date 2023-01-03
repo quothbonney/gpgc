@@ -1,0 +1,3 @@
+[submodule "half"]
+	path = half
+	url = https://github.com/melowntech/half
