@@ -12,7 +12,7 @@ if(GDAL_FOUND)
 else(GDAL_FOUND)
     message(WARNING "GDAL NOT FOUND. Skipping GDAL package build...")
 endif()
-
+add_compile_options(-g)
 add_executable(gpgc gpgcconv.cc)
 
 target_link_libraries(gpgc PRIVATE GDAL::GDAL Eigen3::Eigen)

@@ -1,10 +1,17 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 import struct
 import sys
 import math
+from osgeo import gdal
 
-if __name__ == '__main__':
+def read_gtif(filename):
+    ds = gdal.Open(filename)
+    raw_data = ds.ReadAsArray()
+    return raw_data
+
+def decompress(filename, sz):
     data = []
     vectors = []
 
@@ -12,11 +19,11 @@ if __name__ == '__main__':
     x0 = [0]
     y0 = [0]
 
-    with open(sys.argv[1]) as gpgc:
+    with open(filename) as gpgc:
         for line in gpgc:
             words = line.split(" ")
             #data.append((int(words[3]), (float(words[0]), float(words[1]), int(words[2]))));
-            max_size = 512;
+            max_size = sz;
             size = int(words[3])
             exp = max_size / size
             data.append(int(math.log2(exp)))
@@ -44,11 +51,11 @@ if __name__ == '__main__':
     #print(x0)
     #print(y0)
 
-    decompressed = np.zeros((512, 512), dtype=int)
+    decompressed = np.zeros((max_size, max_size), dtype=int)
 
     for elem in range(len(x0)):
-        x_o = int(x0[elem] * 512)
-        y_o = int(y0[elem] * 512)
+        x_o = int(x0[elem] * max_size)
+        y_o = int(y0[elem] * max_size)
         #print(x_o, y_o)
         
         i, j, k, size = vectors[elem]
@@ -58,8 +65,17 @@ if __name__ == '__main__':
                 decompressed[y_o + m][x_o + n] = int(altitude)
 
 
-    plt.imshow(decompressed, cmap='hot')
+    return decompressed
+
+
+if __name__ == '__main__':
+
+    decompressed = decompress(sys.argv[1], int(sys.argv[2]))
+    original = read_gtif(sys.argv[3]);
+
+    plt.imshow(decompressed, cmap=cm.terrain)
     plt.show()
+    
 
 
 
