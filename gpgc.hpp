@@ -28,6 +28,12 @@ struct gpgc_vector{
     u_int16_t size;
 };
 
+struct raster_offset {
+    int x, y, size;
+
+    raster_offset(int _x,int _y,int _s) : x(_x), y(_y), size(_s) {};
+};
+
 typedef struct {
 	uint16_t height, width;
 	GDALRasterBand* rBand;
@@ -184,6 +190,37 @@ uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
 	return block;
 }
 
+inline int maxl2(int size) {
+	return pow(2, std::floor(std::log2(size)));
+}
+
+std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX, int offY) {
+	static std::vector<raster_offset> iterations;
+    if(offX >= raster_size - 1 || offY >= raster_size - 1)
+        return iterations;
+
+	if(offX + it_size == raster_size && offY + it_size == raster_size) {
+        iterations.emplace_back(offX, offY, it_size);
+        return iterations;
+    } else if(offX + it_size <= raster_size && offY + it_size <= raster_size) {
+        int new_size = it_size;
+        iterations.emplace_back(offX, offY, it_size);
+
+        iteration_map(raster_size, new_size, offX + it_size, offY);
+        iteration_map(raster_size, new_size, offX, offY + it_size);
+        iteration_map(raster_size, new_size, offX + it_size, offY + it_size);
+    } else {
+        int new_size = it_size / 2;
+        iteration_map(raster_size, new_size, offX, offY);
+        iteration_map(raster_size, new_size, offX + it_size, offY);
+        iteration_map(raster_size, new_size, offX, offY + it_size);
+        iteration_map(raster_size, new_size, offX + it_size, offY + it_size);
+    }
+
+
+	return iterations;
+}
+
 void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu) {
     gpgc_encoder gpe{
             (unsigned char *) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
@@ -192,6 +229,8 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
 	
 	gpgc_mu = mu;
 	gpgc_zeta = zeta;
+
+	std::vector<raster_offset> iterations = iteration_map(_dat.width, maxl2(_dat.width), 0, 0);
 
 	std::stringstream fname;
 	fname << std::filesystem::current_path().c_str() << "/" << out_filename;
