@@ -199,10 +199,10 @@ std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX,
     if(offX >= raster_size - 1 || offY >= raster_size - 1)
         return iterations;
 
-	if(offX + it_size == raster_size && offY + it_size == raster_size) {
+	if(offX + it_size == raster_size || offY + it_size == raster_size) {
         iterations.emplace_back(offX, offY, it_size);
         return iterations;
-    } else if(offX + it_size <= raster_size && offY + it_size <= raster_size) {
+    } else if(offX + it_size < raster_size && offY + it_size < raster_size) {
         int new_size = it_size;
         iterations.emplace_back(offX, offY, it_size);
 
@@ -212,9 +212,9 @@ std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX,
     } else {
         int new_size = it_size / 2;
         iteration_map(raster_size, new_size, offX, offY);
-        iteration_map(raster_size, new_size, offX + it_size, offY);
-        iteration_map(raster_size, new_size, offX, offY + it_size);
-        iteration_map(raster_size, new_size, offX + it_size, offY + it_size);
+        iteration_map(raster_size, new_size, offX + new_size, offY);
+        iteration_map(raster_size, new_size, offX, offY + new_size);
+        iteration_map(raster_size, new_size, offX + new_size, offY + new_size);
     }
 
 
@@ -230,7 +230,7 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
 	gpgc_mu = mu;
 	gpgc_zeta = zeta;
 
-	std::vector<raster_offset> iterations = iteration_map(_dat.width, maxl2(_dat.width), 0, 0);
+	std::vector<raster_offset> iterations = iteration_map(_dat.width + 256, maxl2(_dat.width), 0, 0);
 
 	std::stringstream fname;
 	fname << std::filesystem::current_path().c_str() << "/" << out_filename;
