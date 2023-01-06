@@ -148,10 +148,18 @@ void gpgc_encode_64(gpgc_encoder* _gpe, const uint64_t& serialized) {
 	_gpe->bytestream[(_gpe->p)++] = (0x000000000000FFFF & serialized);
 }
 
+void gpgc_encode_size(gpgc_encoder* _gpe, const uint8_t iteration_size) {
+	_gpe->bytestream[(_gpe->p)++] = (0xFFFF & iteration_size);
+	_gpe->bytestream[(_gpe->p)++] = (0x737A) >> 8; // Hints at next character being size
+}
+
 void gpgc_easy_write(gpgc_encoder* _gpe, gpgc_vector fit, int size) {
 	_gpe->ez_enc << fit.i << " " << fit.j << " " << fit.k << " " << size << "\n";
 }
 
+void gpgc_easy_size(gpgc_encoder* _gpe, int size, int num) {
+	_gpe ->ez_enc << "SIZEIS: " << size << " " << num << "\n";
+}
 
 gpgc_gdal_data process_file(const char* filename) {
 	GDALAllRegister();
@@ -230,7 +238,7 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
 	gpgc_mu = mu;
 	gpgc_zeta = zeta;
 
-	std::vector<raster_offset> iterations = iteration_map(_dat.width + 256, maxl2(_dat.width), 0, 0);
+	std::vector<raster_offset> iterations = iteration_map(_dat.width, maxl2(_dat.width), 0, 0);
 
 	std::stringstream fname;
 	fname << std::filesystem::current_path().c_str() << "/" << out_filename;
@@ -249,8 +257,16 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
 	memcpy(&serialized_header, &magic_header, sizeof(struct gpgc_header_t));
 
 	gpgc_encode_64(&gpe, serialized_header);
-    gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe);
 
+    for(int sz_i = 0; sz_i < iterations.size(); ++sz_i) {
+		if(iterations[sz_i].size != iterations[sz_i-1].size) {
+			size_t extra = 0;
+			while(iterations[sz_i + extra].size == iterations[sz_i].size) extra++;
+			gpgc_encode_size(&gpe, std::log2(iterations[sz_i].size));
+			gpgc_easy_size(&gpe, iterations[sz_i].size, extra);
+		}
+        gpgc_partition(iterations[sz_i].size, iterations[sz_i].x, iterations[sz_i].y, rasterBMP, &gpe);
+    }
     fwrite(gpe.bytestream, 1, gpe.p, f);
     free(gpe.bytestream);
 	gpe.ez_enc.close();
