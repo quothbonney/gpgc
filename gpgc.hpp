@@ -13,6 +13,7 @@
 #include "gdal_priv.h"
 
 #define GPGC_HEADER_SIZE 8 
+#define GPGC_MAX_ERROR 50
 
 int gpgc_mu;
 int gpgc_zeta;
@@ -77,6 +78,8 @@ private:
 			for(size_t cell = 0; cell < size; ++cell) {
 				float expected = (vec.i * row) + (vec.j * cell) + vec.k; // In form ax_by_z for vector
 				float cell_diff = expected - bmp[yOff + row][xOff + cell]; // Get difference
+				if(cell_diff > GPGC_MAX_ERROR && size > 4) 
+					return 32767.f;
 				float score = std::abs(cell_diff / gpgc_mu); 
 				float P_ak = inverse_z_transform(score);
 				float point_info = -1 * std::log2(2.56*P_ak); // Shannon info formula
@@ -84,7 +87,7 @@ private:
 				info += point_info;
 			}
 		}
-		float adjusted_info = (long double)info / (size*size);
+		float adjusted_info = (long double)info / (size*size + 4);
 
 		return adjusted_info;
 	}
