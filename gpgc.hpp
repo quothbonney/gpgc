@@ -9,6 +9,7 @@
 #include <eigen3/Eigen/Dense>
 #include <fstream>
 #include <filesystem>
+#include <sys/types.h>
 #include "half/half/half.hpp"
 #include "gdal_priv.h"
 
@@ -273,6 +274,33 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
     fwrite(gpe.bytestream, 1, gpe.p, f);
     free(gpe.bytestream);
 	gpe.ez_enc.close();
+}
+
+std::array<std::vector<int>, 2> gpgc_decode_offsets(int* sizes, int num_sizes) {
+	std::vector<int> x0 = { 0 };
+	std::vector<int> y0 = { 0 };
+	std::vector<int> b  = { 0 };
+	
+	auto it_b = b.begin();
+	auto it_y = y0.begin();
+	auto it_x = x0.begin();
+	size_t index = 0;
+	while(index < num_sizes) {
+		while(b[index] < sizes[index]) {
+			b[index] = b[index] + 1;
+			for(int i = 0; i < 3; ++i) 
+				b.insert(it_b + index + 1, b[index]);
+
+            x0.insert(it_x + index + 1, x0[index] + (1 / pow(2, b[index])));
+            x0.insert(it_x + index + 2, x0[index]);
+            x0.insert(it_x + index + 3, x0[index] + (1 / pow(2, b[index])));
+
+            y0.insert(it_y + index + 1, y0[index]);
+            y0.insert(it_y + index + 2, y0[index] + (1 / pow(2, b[index])));
+            y0.insert(it_y + index + 3, y0[index] + (1 / pow(2, b[index])));
+		}
+		index++;
+	}
 }
 
 #endif
