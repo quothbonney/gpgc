@@ -1,6 +1,6 @@
 
 <div align="center">
-<img src="charts/logo.png" alt="drawing" width="330"/>
+<img src="./charts/logo.png" alt="drawing" width="330"/>
 </div>
 
 # General Purpose Geospatial Compression (GPGC)
