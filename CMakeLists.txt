@@ -13,9 +13,9 @@ else(GDAL_FOUND)
     message(WARNING "GDAL NOT FOUND. Skipping GDAL package build...")
 endif()
 add_compile_options(-g)
-add_executable(gpgc gpgcconv.cc)
+add_executable(gpgcconv gpgcconv.cc gpgclinearalgebra.cc gpgcencode.cc)
 
-target_link_libraries(gpgc PRIVATE GDAL::GDAL Eigen3::Eigen)
+target_link_libraries(gpgcconv PRIVATE GDAL::GDAL Eigen3::Eigen)
 
-target_compile_features(gpgc PRIVATE cxx_std_17)
+target_compile_features(gpgcconv PRIVATE cxx_std_17)
 

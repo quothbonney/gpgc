@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 
 	int mu = 20;
 	double zeta = 0.3;
-	bool is_verbose = false;
+	bool is_verbose = false, max_error = true;
 
 	std::streambuf* cout_buffer = std::cout.rdbuf();	
 
@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
 		if(fl == "-u" || fl == "--mu")
 			i + 1 <= argc ? mu = atoi(argv[i + 1]) : put_h();
 		if(fl == "--verbose") is_verbose = true;
+		if(fl == "--no-max-error") max_error = false;
+	
 	}
 	if(is_verbose) std::cout.rdbuf(NULL);
 	
@@ -41,10 +43,12 @@ int main(int argc, char **argv) {
 
 		
 		if(is_verbose) std::cout.rdbuf(cout_buffer);
-		gpgc_encode(argv[1], argv[2], dat, zeta, mu);
+		gpgc_encode(argv[1], argv[2], dat, zeta, mu, max_error);
 	}
 	std::cout.rdbuf(cout_buffer);
 	std::cout << argv[2] << "\t" << argv[2] << ".log\n";
+
+	gpgc_read(argv[2], 2048);
 
 	return 0;
 }
