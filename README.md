@@ -1,6 +1,6 @@
 
 <div align="center">
-<img src="./charts/largelogo.png" height="250" alt="Logo and title"/>
+<img src="./charts/largelogo.png" alt="Logo and title"/>
 </div>
 
 ## A compression algorithm to *drive* the world
@@ -8,7 +8,7 @@ The GPGC algorithm is a novel  quad-tree set-partition-coding algorithm that is 
 It is specialized for rasterized geospatial data in a GeoTIFF or DTED format, facilitating transfer and storage of high precision LIDAR data for uses in automated vehicles, air-ground collision avoidance,
 robotics, and precision agriculture.
 <div align="center">
-<img src="./charts/gif/transform.gif" height="500" alt="Compression Animation"/>
+<img src="./charts/gif/transform.gif" width="50%" alt="Compression Animation"/>
 </div>
 
 GPGC is a fully open-source binary format that outperforms similar lossy geospatial data compression algorithms in both efficiency and accuracy
