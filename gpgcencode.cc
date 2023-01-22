@@ -1,6 +1,5 @@
 #include "gpgc.hpp"
 
-
 gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
         : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
     const float* _partition_block = get_block();
@@ -11,17 +10,17 @@ gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** raste
 }
 
 float gpgc_partition::get_entropy(const gpgc_vector& vec, const float* block) const {
-	gpgc_compression_parameters param = gpgc_compression_parameters::get();
+	using namespace gpgc_compression_paramters;
     unsigned long long info = 0;
     for(size_t row = 0; row < size; ++row) {
         for(size_t cell = 0; cell < size; ++cell) {
             float expected = (vec.i * row) + (vec.j * cell) + vec.k; // In form ax_by_z for vector
             float cell_diff = expected - bmp[yOff + row][xOff + cell]; // Get difference
-            if(param.gpgc_max_error != 0) {
-                if(cell_diff > param.gpgc_max_error && size > 4)
+            if(gpgc_max_error != 0) {
+                if(cell_diff > gpgc_max_error && size > 4)
                     return 32767.f;
             }
-            float score = std::abs(cell_diff / param.gpgc_mu);
+            float score = std::abs(cell_diff / gpgc_mu);
             float P_ak = inverse_z_transform(score);
             float point_info = -1 * std::log2(2.56*P_ak); // Shannon info formula
 
@@ -34,8 +33,8 @@ float gpgc_partition::get_entropy(const gpgc_vector& vec, const float* block) co
 }
 
 void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector) {
-	gpgc_compression_parameters param = gpgc_compression_parameters::get();
-    if(entropy > param.gpgc_zeta &&  size >= 4) {
+	using namespace gpgc_compression_paramters;
+    if(entropy > gpgc_zeta &&  size >= 4) {
         int new_size = size / 2;
 
         gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe);
@@ -159,7 +158,9 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
             0
     };
 
-	gpgc_compression_parameters p = gpgc_compression_parameters::instance(max_error*50, mu, zeta);
+	gpgc_compression_paramters::gpgc_max_error = max_error * 50;
+	gpgc_compression_paramters::gpgc_mu        = mu;
+	gpgc_compression_paramters::gpgc_zeta	   = zeta;
     std::vector<raster_offset> iterations = iteration_map(_dat.width, maxl2(_dat.width), 0, 0);
 
     std::stringstream fname;

@@ -15,24 +15,11 @@
 
 #define GPGC_HEADER_SIZE 8 
 
-struct gpgc_compression_parameters {
+namespace gpgc_compression_paramters {
 	static int gpgc_max_error;
 	static int gpgc_mu;
 	static float gpgc_zeta;
-
-	static gpgc_compression_parameters& instance(int max_error, float mu, int zeta) {
-		static gpgc_compression_parameters once = gpgc_compression_parameters{};
-		once.gpgc_max_error = max_error;
-		once.gpgc_zeta = zeta;
-		once.gpgc_mu = mu;
-		return once;
-	}
-
-	static gpgc_compression_parameters& get() {
-		static gpgc_compression_parameters once = gpgc_compression_parameters{};
-		return once;
-	}
-};
+}
 
 struct gpgc_header_t {
 	uint32_t width;
@@ -109,7 +96,7 @@ inline void gpgc_easy_size(gpgc_encoder* _gpe, int size, int num) {
     _gpe ->ez_enc << "SIZEIS: " << size << " " << num << "\n";
 }
 
-void gpgc_decode_64(gpgc_encoder* _gpe) {
+inline void gpgc_decode_64(gpgc_encoder* _gpe) {
 	unsigned int a = _gpe->bytestream[(_gpe->p)++];
 }
 
