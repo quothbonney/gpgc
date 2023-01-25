@@ -64,7 +64,12 @@ float* gpgc_partition::get_block() const {
 
 gpgc_vector gpgc_partition::fit_vector(const float* block) {
     int sq = size*size;
-    gpgc_create_matrix_A(sq);
+    int** p = gpgc_create_matrix_A(size);
+	int** r = gpgc_get_transpose(p, sq, 3);
+	int** n = gpgc_multiply_matricies(r, p, sq, 3);
+	free(r);
+	free(n);
+	free(p);
     Eigen::Map<Eigen::VectorXf> block_vector(const_cast<float*>(block), sq);
     Eigen::VectorXi v(sq), a1(sq), a2(sq), a3(sq);
 

@@ -59,6 +59,8 @@ void gpgc_encode_64(gpgc_encoder *_gpe, const uint64_t &serialized);
 void gpgc_easy_write(gpgc_encoder *_gpe, gpgc_vector fit, int size);
 double inverse_z_transform(double z_score);
 int** gpgc_create_matrix_A(int partition_size);
+int** gpgc_get_transpose(int** matrix_a, int rows, int cols);
+int** gpgc_multiply_matricies(int** arr1, int** arr2, int rows, int cols);
 
 struct gpgc_partition {
 	int xOff, yOff, size;
