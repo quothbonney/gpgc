@@ -64,9 +64,11 @@ float* gpgc_partition::get_block() const {
 
 gpgc_vector gpgc_partition::fit_vector(const float* block) {
     int sq = size*size;
-    int** p = gpgc_create_matrix_A(size);
-	int** r = gpgc_get_transpose(p, sq, 3);
-	int** n = gpgc_multiply_matricies(r, p, sq, 3);
+    int skipper = 16;
+	int sq_skip_sz = pow(size / skipper, 2);
+    int** p = gpgc_create_matrix_A(size, skipper);
+	int** r = gpgc_get_transpose(p, sq_skip_sz, 3);
+	int** n = gpgc_multiply_matricies(p, r, sq_skip_sz, 3);
 	free(r);
 	free(n);
 	free(p);
@@ -119,7 +121,7 @@ uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
     auto** block = new uint16_t*[rData->height];
     for(int row = 0; row < rData->height; ++row) {
         block[row] = new uint16_t[rData->width];
-        rData->rBand->RasterIO(GF_Read, 0, row, rData->width,
+        auto tmpCPLerror = rData->rBand->RasterIO(GF_Read, 0, row, rData->width,
                                1, block[row], rData->width, 1,
                                GDT_Int16, 0, 0);
     }
@@ -157,7 +159,7 @@ std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX,
     return iterations;
 }
 
-void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error) {
+void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error) {
     gpgc_encoder gpe{
             (unsigned char *) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
             0
@@ -201,7 +203,7 @@ void* gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat
 }
 
 
-void* gpgc_read(const char* filename, const int size) {
+void gpgc_read(const char* filename, const int size) {
     std::ifstream gpgc_file(filename, std::ios::binary);
     int x;
     while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(u_int16_t))) {
@@ -237,5 +239,7 @@ std::array<std::vector<int>, 2> gpgc_decode_offsets(int* sizes, int num_sizes) {
         }
         index++;
     }
+	std::array<std::vector<int>, 2> p;
+	return p;
 }
 

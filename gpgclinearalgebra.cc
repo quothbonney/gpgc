@@ -1,13 +1,15 @@
 #include "gpgc.hpp"
 
-int** gpgc_create_matrix_A(int partition_size) {
+int** gpgc_create_matrix_A(int partition_size, int skipper) {
 	int** matrix_a;
-	matrix_a = (int**)malloc(partition_size * partition_size * sizeof(int*));
-	for(int i = 0; i < partition_size; ++i) {
-		for(int j = 0; j < partition_size; ++j) {
-			int current_index = (i * partition_size) + j;
+	int m_sz = partition_size / skipper;
+	matrix_a = (int**)malloc(m_sz * m_sz * sizeof(int*));
+
+	for(int i = 0; i < m_sz; i++) {
+		for(int j = 0; j < m_sz; j++) {
+			int current_index = (i * m_sz) + j;
             matrix_a[current_index] = (int*)malloc(3 * sizeof(int));
-			int row[3] = {i, j, 1};
+			int row[3] = {i * skipper, j * skipper, 1};
 			matrix_a[current_index] = row;
         }
 	}
@@ -23,6 +25,7 @@ int** gpgc_get_transpose(int** matrix_a, int rows, int cols) {
 			transpose_matrix[j][i] = matrix_a[i][j];
 		}
 	}
+    return transpose_matrix;
 }
 
 int** gpgc_multiply_matricies(int** arr1, int** arr2, int rows, int cols) {
