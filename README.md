@@ -1,6 +1,6 @@
 
 <div align="center">
-<img src="./charts/largelogo.png" alt="Logo and title"/>
+<img src="./assets/largelogo.png" alt="Logo and title"/>
 </div>
 
 ## A compression algorithm to *drive* the world
@@ -8,7 +8,7 @@ The GPGC algorithm is a novel  quad-tree set-partition-coding algorithm that is 
 It is specialized for rasterized geospatial data in a GeoTIFF or DTED format, facilitating transfer and storage of high precision LIDAR data for uses in automated vehicles, air-ground collision avoidance,
 robotics, and precision agriculture.
 <div align="center">
-<img src="./charts/gif/transform.gif" width="50%" alt="Compression Animation"/>
+<img src="./assets/gif/transform.gif" width="50%" alt="Compression Animation"/>
 </div>
 
 GPGC is a fully open-source binary format that outperforms similar lossy geospatial data compression algorithms in both efficiency and accuracy
@@ -26,7 +26,7 @@ allows users to throttle compression ratios based on their own usage.
 GPGC's C++ implentation currently has three dependencies: Eigen, IEEE754half, and GDAL. The short float header file `half.hpp` is linked as a submodule,
 and can be cloned recursively. For the remaining dependencies, they must be installed manually. On Ubuntu this is sample:
 ```shell
-sudo apt install libeigen3-dev
+sudo apt-get install libeigen3-dev
 sudo apt-get install libgdal-dev
 ````
 If you are not on an Ubuntu based distribution, I trust you can locate these packages on your own.
