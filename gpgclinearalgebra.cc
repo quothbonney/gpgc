@@ -9,11 +9,25 @@ int** gpgc_create_matrix_A(int partition_size, int skipper) {
 		for(int j = 0; j < m_sz; j++) {
 			int current_index = (i * m_sz) + j;
             matrix_a[current_index] = (int*)malloc(3 * sizeof(int));
-			int row[3] = {i * skipper, j * skipper, 1};
-			matrix_a[current_index] = row;
+            int row_arr[] = {i * skipper, j * skipper, 1};
+            for(int l = 0; l < 3; l++) {
+                matrix_a[current_index][l] = row_arr[l];
+            }
         }
 	}
     return matrix_a;
+}
+
+int** gpgc_create_matrix_B(int partition_size, int skipper, int* block) {
+	int** matrix_b;
+	int m_sz = partition_size / skipper;
+	matrix_b = (int**)malloc(m_sz * m_sz * sizeof(int*));
+
+	for(int i = 0; i < m_sz*m_sz; i++) {
+		matrix_b[i] = (int*)malloc(sizeof(int));
+		matrix_b[i] = &block[i*skipper];
+	}
+    return matrix_b;
 }
 
 int** gpgc_get_transpose(int** matrix_a, int rows, int cols) {
