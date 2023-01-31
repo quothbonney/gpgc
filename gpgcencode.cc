@@ -1,5 +1,7 @@
 #include "gpgc.hpp"
 
+#define GPGC_SKIP_BITSHIFTS 4
+
 gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
         : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
     const float* _partition_block = get_block();
@@ -62,16 +64,31 @@ float* gpgc_partition::get_block() const {
     return block;
 }
 
+int* gpgc_partition::get_block_int() const {
+    int sq = size * size;
+    auto* block = new int[sq];
+
+    for(size_t row = 0; row < size; ++row) {
+        for(size_t cell = 0; cell < size; ++cell)
+            block[(row * size) + cell] = bmp[row+yOff][cell + xOff];
+    }
+    return block;
+}
+
 gpgc_vector gpgc_partition::fit_vector(const float* block) {
     int sq = size*size;
-    int skipper = 16;
-	int sq_skip_sz = pow(size / skipper, 2);
-    int** p = gpgc_create_matrix_A(size, skipper);
-	int** r = gpgc_get_transpose(p, sq_skip_sz, 3);
-	int** n = gpgc_multiply_matricies(p, r, sq_skip_sz, 3);
-	free(r);
-	free(n);
-	free(p);
+    int skipper = size > 32 ? size >> GPGC_SKIP_BITSHIFTS : 1;
+    using namespace Eigen;
+    int cols = pow(size / skipper, 2) + 1;
+    int rows = 3;
+
+    int* arr_A = gpgc_create_eigen_A(size, skipper, block);
+    // Creates the initial matrix as the transpose (easier to send to Eigen map buffer)
+    MatrixXi eigen_matrix_A = Map<Matrix<int, Dynamic, Dynamic> >(arr_A, rows, cols);
+    std::cout << eigen_matrix_A.transpose();
+
+    int* matrix_B = gpgc_create_matrix_B(size, skipper, block);
+
     Eigen::Map<Eigen::VectorXf> block_vector(const_cast<float*>(block), sq);
     Eigen::VectorXi v(sq), a1(sq), a2(sq), a3(sq);
 
@@ -202,7 +219,6 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
     gpe.ez_enc.close();
 }
 
-
 void gpgc_read(const char* filename, const int size) {
     std::ifstream gpgc_file(filename, std::ios::binary);
     int x;
@@ -212,7 +228,6 @@ void gpgc_read(const char* filename, const int size) {
 
     gpgc_file.close();
 }
-
 
 std::array<std::vector<int>, 2> gpgc_decode_offsets(int* sizes, int num_sizes) {
     std::vector<int> x0 = { 0 };

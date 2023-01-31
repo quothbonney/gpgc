@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <ostream>
-#include <stdio.h>
 #include <iostream>
 #include <string>
 #include <eigen3/Eigen/Dense>
@@ -11,7 +10,9 @@
 #include <filesystem>
 #include <sys/types.h>
 #include "half/half/half.hpp"
+#include "gpgcmath.h"
 #include "gdal_priv.h"
+
 
 #define GPGC_HEADER_SIZE 8 
 
@@ -58,9 +59,7 @@ typedef struct {
 void gpgc_encode_64(gpgc_encoder *_gpe, const uint64_t &serialized);
 void gpgc_easy_write(gpgc_encoder *_gpe, gpgc_vector fit, int size);
 double inverse_z_transform(double z_score);
-int** gpgc_create_matrix_A(int partition_size, int skipper);
-int** gpgc_get_transpose(int** matrix_a, int rows, int cols);
-int** gpgc_multiply_matricies(int** arr1, int** arr2, int rows, int cols);
+
 
 struct gpgc_partition {
 	int xOff, yOff, size;
@@ -73,6 +72,8 @@ private:
 	void subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector);
 
 	float* get_block() const;
+
+	int* get_block_int() const;
 
 	gpgc_vector fit_vector(const float* block);
 
