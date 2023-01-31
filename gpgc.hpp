@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2023, Jack Carson - https://github.com/quothbonney
+ * SPDX-License-Identifier: MIT
+ *
+ *
+ * The "General Purpose Geospatial Compression" format for high efficiency lossy compression 
+ *
+ * -- About
+ *
+ *  GPGC encodes data based on a set-partition-code algorithm, representing GeoTIFF 
+ *  raster files as a quadtree structure of orthogonal vectors. GPGC offers compression
+ *  ratios from 10 to 70, with linear decoding, and procedurally ensured quality and 
+ *  accuracy guaruntees.
+ *
+ *
+ *  -- Usage
+ *  
+ *  Ensure you `#define GPGC_IMPLEMENTATION` in one C/CXX file before including the `.hpp` file
+ *			   `#include "gpgc.hpp"`
+ */
+
+
 #ifndef GPGC_H
 #define GPGC_H
 
@@ -14,7 +36,24 @@
 #include "gdal_priv.h"
 
 
+/*
+ * GPGC header has not yet been specified. This is reserved for a future implementation,
+ * however the size is parametrically implemented already and can be added easily with
+ * the geotiffio reaster reader. Defined as 8 bytes to fit 2 32-bit integers defined in
+ * gpgc_header_t
+ */
+
 #define GPGC_HEADER_SIZE 8 
+
+/*
+ * These parameters are passed from the implementation functions to this namespace
+ * where they are defined as static variables. It is best not to interact with this 
+ * namespace directly.
+ *
+ *		gpgc_max_error: The maximum error acceptable before a forced partition. This can be set to undefined.
+ *		gpgc_mu:		The threshold for acceptable average entropy of an encoded partition
+ *		gpgc_zeta:		Standard deviation of average errors; used to calculate information entropy
+ */
 
 namespace gpgc_compression_paramters {
 	static int gpgc_max_error;
@@ -22,23 +61,40 @@ namespace gpgc_compression_paramters {
 	static float gpgc_zeta;
 }
 
+/*
+ * Header for GPGC files providing information about how to read, size, bands, and location metadata
+ * stripped from GeoTIFF header. Anticipating geotiffio implementation.
+ */
+
 struct gpgc_header_t {
 	uint32_t width;
 	uint32_t height;
 };
 
+/*
+ * Key leaf node structure, containing two half precision 16-bit floats that are defined in submodule
+ * half. k-hat and size are 16-bit unsigned integers. Overall the struct is 64 bits serialized and encoded.
+ */
 struct gpgc_vector{
 	half_float::half i, j;
     int16_t k;
     u_int16_t size;
 };
 
+/*
+ * Structure containing information about mosaic fragment locations
+ */
 struct raster_offset {
     int x, y, size;
 
     raster_offset(int _x,int _y,int _s) : x(_x), y(_y), size(_s) {};
 };
 
+/*
+ * Header data from GeoTIFF as provided by GDAL. Current use: rBand->rasterIO outputs int** buffer for
+ * raw compression data. rHeaderData[6] contains header location data identifying the raster in space. 
+ * Height and width passed to `gpgc_header_t`. Looking to remove dependency and structure.
+ */
 typedef struct {
 	uint16_t height, width;
 	GDALRasterBand* rBand;
@@ -50,6 +106,11 @@ typedef struct {
 	unsigned int height;
 } gpgc_desc;
 
+/*
+ * Container for encoding information passed by pointer to every object. `bytestream` holds the encoded
+ * that is assigned to the output `.gpgc` file. p is the position in the bytestream the data needs to be
+ * entered. ez_enc is for python `.gpgc.log` output, allowing for UTF-8 unpackinig and simple analysis.
+ */
 typedef struct {
    unsigned char* bytestream;
    int p;
