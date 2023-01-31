@@ -1,6 +1,6 @@
 #include "gpgc.hpp"
 
-#define GPGC_SKIP_BITSHIFTS 7
+#define GPGC_SKIP_BITSHIFTS 6
 
 gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
         : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
@@ -84,7 +84,7 @@ gpgc_vector gpgc_partition::fit_vector(const float* block) {
 
     int* arr_A = gpgc_create_eigen_A(size, skipper, block);
     // Creates the initial matrix as the transpose (easier to send to Eigen map buffer)
-    MatrixXi eigen_matrix_A = Map<Matrix<int, Dynamic, Dynamic> >(arr_A, rows, cols);
+    MatrixXi eigen_matrix_A = Map<Matrix<int, 3, Dynamic> >(arr_A, rows, cols);
 
     int* arr_B = gpgc_create_matrix_B(size, skipper, block);
     VectorXi eigen_vector_B = Map<VectorXi>(arr_B, cols);
