@@ -163,11 +163,11 @@ private:
  * Relies on data to be 64-bit, as it is bitshifted into 4 16 bit fragments.
  * Bitwise AND for each two bytes of the serialized vector which are then bitshifted into the correct place
  */
-inline void gpgc_encode_64(gpgc_encoder* _gpe, const uint64_t& serialized) {
-	_gpe->bytestream[(_gpe->p)++] = (0xFFFF000000000000 & serialized);
-	_gpe->bytestream[(_gpe->p)++] = (0x0000FFFF00000000 & serialized);
-	_gpe->bytestream[(_gpe->p)++] = (0x00000000FFFF0000 & serialized);
-	_gpe->bytestream[(_gpe->p)++] = (0x000000000000FFFF & serialized);
+inline void gpgc_encode_64(gpgc_encoder* _gpe, const uint16_t serialized[]) {
+	_gpe->bytestream[(_gpe->p)++] = (serialized[0]);
+	_gpe->bytestream[(_gpe->p)++] = (serialized[1]);
+	_gpe->bytestream[(_gpe->p)++] = (serialized[2]);
+	_gpe->bytestream[(_gpe->p)++] = (serialized[3]);
 }
 
 /*

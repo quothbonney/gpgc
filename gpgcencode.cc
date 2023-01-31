@@ -46,7 +46,7 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
     } else {
         std::cout << "Encoded leaf node with size " << size << " at " << xOff << " " << yOff <<  ". Entropy=" << entropy << "\n";
 
-        uint64_t encoded_int;
+        uint16_t encoded_int[4];
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
         gpgc_encode_64(_gpe, encoded_int);
         gpgc_easy_write(_gpe, *_encoded_vector, size);
@@ -183,7 +183,7 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
 
     uint16_t** rasterBMP = gpgc_read_16(&_dat);
 
-    uint64_t serialized_header;
+    uint16_t serialized_header[4];
     memcpy(&serialized_header, &magic_header, sizeof(struct gpgc_header_t));
 
     gpgc_encode_64(&gpe, serialized_header);

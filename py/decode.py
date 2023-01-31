@@ -60,19 +60,19 @@ def decompress(filename, sz):
             if len(words) < 4:
                 continue
             # data.append((int(words[3]), (float(words[0]), float(words[1]), int(words[2]))));
-            max_size = 2048;
+            max_size = sz;
             size = int(words[3])
-            exp = 2048 / size
+            exp = max_size / size
             data.append(int(math.log2(exp)))
             vectors.append((float(words[0]), float(words[1]), float(words[2]), size))
 
-    decompressed = np.zeros((2048, 2048), dtype=int)
+    decompressed = np.zeros((sz, sz), dtype=int)
 
     x0, y0 = create_offsets(data)
     print(len(x0), len(y0), len(vectors))
     for elem in range(len(x0)):
-        x_o = int(x0[elem] * 2048)
-        y_o = int(y0[elem] * 2048)
+        x_o = int(x0[elem] * sz)
+        y_o = int(y0[elem] * sz)
         # print(x_o, y_o)
 
         if(len(vectors[elem]) < 4):
