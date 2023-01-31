@@ -1,6 +1,11 @@
 #include "gpgcmath.h"
 
-int* gpgc_create_matrix_A(int partition_size, int skipper, const float* block) {
+inline double inverse_z_transform(double z_score) {
+	double pi = 3.1415;
+    return (1 / sqrt(2*pi)) * exp(-(z_score*z_score)/2);
+}
+
+int* gpgc_create_matrix_A(int partition_size, int skipper, const int* block) {
     int* arr_A;
     int m_sz = partition_size / skipper;
     arr_A = (int*)malloc((3 * m_sz * m_sz) * sizeof(int));
@@ -17,7 +22,7 @@ int* gpgc_create_matrix_A(int partition_size, int skipper, const float* block) {
     return arr_A;
 }
 
-int* gpgc_create_matrix_B(int partition_size, int skipper, const float* block) {
+int* gpgc_create_matrix_B(int partition_size, int skipper, const int* block) {
 	int* matrix_b;
 	int m_sz = partition_size / skipper;
 	matrix_b = (int*)malloc(m_sz * m_sz * sizeof(int*));

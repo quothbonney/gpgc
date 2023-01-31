@@ -14,9 +14,11 @@ extern "C"
 #include <stdlib.h>
 #include <math.h>
 
-int* gpgc_create_matrix_B(int partition_size, int skipper, const float* block);
+int* gpgc_create_matrix_B(int partition_size, int skipper, const int* block);
 
-int* gpgc_create_matrix_A(int partition_size, int skipper, const float* block);
+int* gpgc_create_matrix_A(int partition_size, int skipper, const int* block);
+
+double inverse_z_transform(double z_score);
 
 #endif //GPGC_GPGCMATH_H
 #ifdef __cplusplus

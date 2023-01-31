@@ -112,61 +112,96 @@ typedef struct {
  * entered. ez_enc is for python `.gpgc.log` output, allowing for UTF-8 unpackinig and simple analysis.
  */
 typedef struct {
-   unsigned char* bytestream;
+   uint16_t* bytestream;
    int p;
    std::ofstream ez_enc;
 } gpgc_encoder;
 
+
+/* 
+ * Encode 64 bit unsigned into the gpgc_encoder struct. Used to pass data to the byte stream
+ * that is subsequently encoded. Whatever is passed ot the unint64 must be already serialized
+ * as desired. Primarily used for encoding of `gpgc_header_t` and the `gpgc_vector` nodes that
+ * form the tree structure in the bytestram.
+ */
 void gpgc_encode_64(gpgc_encoder *_gpe, const uint64_t &serialized);
+
+/*
+ * Used with std::ofstream ez_enc to output data to a .gpgc.log file that is easily readable without
+ * binary unpacking (used in py/ scripts)
+ */
 void gpgc_easy_write(gpgc_encoder *_gpe, gpgc_vector fit, int size);
-double inverse_z_transform(double z_score);
 
-
+/*
+ * Object for each partition used to hold information about its location in the raster
+ */
 struct gpgc_partition {
 	int xOff, yOff, size;
-	uint16_t** bmp;
+
+	uint16_t** bmp; // Raw raster data passed by pointer for use
+					//
 	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data);
 
 private:
-	float get_entropy(const gpgc_vector& vec, const float* block) const;
+	// Returns area for partition in a concatenated int*
+	int* get_block() const;
 
+	float* get_block_float() const;
+
+	// Fits int* block to gpgc_vector using Eigen decomposisition solver
+	gpgc_vector fit_vector(const int* block);
+	
+	// Calculates entropy per point in block, returns as average value
+	float get_entropy(const gpgc_vector& vec, const int* block) const;
+
+	// Decides whether to partition based on entropy value. If no partition, it is encoded into the bytestream
 	void subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector);
-
-	float* get_block() const;
-
-	int* get_block_int() const;
-
-	gpgc_vector fit_vector(const float* block);
-
 };
 
+/*
+ * Shifts the serialized data into the bytestream at position p
+ * Relies on data to be 64-bit, as it is bitshifted into 4 16 bit fragments.
+ * Bitwise AND for each two bytes of the serialized vector which are then bitshifted into the correct place
+ */
 inline void gpgc_encode_64(gpgc_encoder* _gpe, const uint64_t& serialized) {
-	_gpe->bytestream[(_gpe->p)++] = (0xFFFF000000000000 & serialized) >> 48;
-	_gpe->bytestream[(_gpe->p)++] = (0x0000FFFF00000000 & serialized) >> 32;
-	_gpe->bytestream[(_gpe->p)++] = (0x00000000FFFF0000 & serialized) >> 16;
+	_gpe->bytestream[(_gpe->p)++] = (0xFFFF000000000000 & serialized);
+	_gpe->bytestream[(_gpe->p)++] = (0x0000FFFF00000000 & serialized);
+	_gpe->bytestream[(_gpe->p)++] = (0x00000000FFFF0000 & serialized);
 	_gpe->bytestream[(_gpe->p)++] = (0x000000000000FFFF & serialized);
 }
 
+/*
+ * NOT IMPLEMENTED YET
+ * Indicator of new tree structure in 24 bytes.`
+ */
 inline void gpgc_encode_size(gpgc_encoder* _gpe, const uint8_t iteration_size) {
     _gpe->bytestream[(_gpe->p)++] = (0xFFFF & iteration_size);
     _gpe->bytestream[(_gpe->p)++] = (0x737A) >> 8; // Hints at next character being size
 }
 
+/*
+ * Simplified UTF-8 encoding into `.gpgc.log` for easy unpacking in Python
+ */
 inline void gpgc_easy_write(gpgc_encoder* _gpe, gpgc_vector fit, int size) {
     _gpe->ez_enc << fit.i << " " << fit.j << " " << fit.k << " " << size << "\n";
 }
 
+/*
+ * Same UTF-8 encoding for `gpgc_encode_size` method
+ */
 inline void gpgc_easy_size(gpgc_encoder* _gpe, int size, int num) {
     _gpe ->ez_enc << "SIZEIS: " << size << " " << num << "\n";
 }
 
+/*
+ * NOT YET IMPLEMENTED
+ * Decode read 64 bits
+ */
 inline void gpgc_decode_64(gpgc_encoder* _gpe) {
 	unsigned int a = _gpe->bytestream[(_gpe->p)++];
 }
 
 gpgc_gdal_data process_file(const char* filename);
-
-inline double inverse_z_transform(double z_score);
 
 uint16_t** gpgc_read_16(const gpgc_gdal_data* rData);
 

@@ -4,14 +4,14 @@
 
 gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
         : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
-    const float* _partition_block = get_block();
+    const int* _partition_block = get_block();
     const gpgc_vector fit = fit_vector(_partition_block);
     float entropy = get_entropy(fit, _partition_block);
     delete[] _partition_block;
     subpartition(entropy, encoder_data, &fit);
 }
 
-float gpgc_partition::get_entropy(const gpgc_vector& vec, const float* block) const {
+float gpgc_partition::get_entropy(const gpgc_vector& vec, const int* block) const {
 	using namespace gpgc_compression_paramters;
     unsigned long long info = 0;
     for(size_t row = 0; row < size; ++row) {
@@ -53,7 +53,7 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
     }
 }
 
-float* gpgc_partition::get_block() const {
+float* gpgc_partition::get_block_float() const {
     int sq = size * size;
     auto* block = new float[sq];
 
@@ -64,7 +64,7 @@ float* gpgc_partition::get_block() const {
     return block;
 }
 
-int* gpgc_partition::get_block_int() const {
+int* gpgc_partition::get_block() const {
     int sq = size * size;
     auto* block = new int[sq];
 
@@ -75,7 +75,7 @@ int* gpgc_partition::get_block_int() const {
     return block;
 }
 
-gpgc_vector gpgc_partition::fit_vector(const float* block) {
+gpgc_vector gpgc_partition::fit_vector(const int* block) {
     int sq = size*size;
     int skipper = size > 32 ? size >> GPGC_SKIP_BITSHIFTS : 1;
     using namespace Eigen;
@@ -89,11 +89,15 @@ gpgc_vector gpgc_partition::fit_vector(const float* block) {
     int* arr_B = gpgc_create_matrix_B(size, skipper, block);
     VectorXi eigen_vector_B = Map<VectorXi>(arr_B, cols);
     Eigen::MatrixXf f_mat = (eigen_matrix_A * eigen_matrix_A.transpose()).cast<float>();
-    
+
     Eigen::Vector3f x = (eigen_matrix_A.transpose()).cast<float>().householderQr().solve((eigen_vector_B).cast<float>());
 
     using half_float::half;
     gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2]};
+
+	delete arr_A;
+	delete arr_B;
+
     return short_vector;
 }
 
@@ -112,16 +116,6 @@ gpgc_gdal_data process_file(const char* filename) {
     return working;
 }
 
-inline double inverse_z_transform(double z_score) {
-    auto inverse_function = [](double z) -> double {
-        double pi = 3.1415;
-        return (1 / std::sqrt(2*pi)) * std::exp(-(z*z)/2);
-    };
-
-    double upper = inverse_function(z_score);
-
-    return upper;
-}
 
 uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
     auto** block = new uint16_t*[rData->height];
@@ -167,7 +161,7 @@ std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX,
 
 void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error) {
     gpgc_encoder gpe{
-            (unsigned char *) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
+            (uint16_t*) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
             0
     };
 
