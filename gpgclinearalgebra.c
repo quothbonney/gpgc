@@ -1,26 +1,6 @@
 #include "gpgcmath.h"
 
 
-
-int** gpgc_create_matrix_A(int partition_size, int skipper, const float* block) {
-	int** matrix_a;
-	int m_sz = partition_size / skipper;
-    int cols = 3;
-	matrix_a = (int**)malloc(cols * m_sz * m_sz * sizeof(int*));
-
-	for(int i = 0; i < m_sz; i++) {
-		for(int j = 0; j < m_sz; j++) {
-			int current_index = (i * m_sz) + j;
-            matrix_a[current_index] = (int*)malloc(3 * sizeof(int));
-            int row_arr[] = {i * skipper, j * skipper, 1};
-            for(int l = 0; l < 3; l++) {
-                matrix_a[current_index][l] = row_arr[l];
-            }
-        }
-	}
-    return matrix_a;
-}
-
 int* gpgc_create_eigen_A(int partition_size, int skipper, const float* block) {
     int* arr_A;
     int m_sz = partition_size / skipper;
