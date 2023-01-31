@@ -1,6 +1,6 @@
 #include "gpgc.hpp"
 
-#define GPGC_SKIP_BITSHIFTS 4
+#define GPGC_SKIP_BITSHIFTS 7
 
 gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
         : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
@@ -79,17 +79,23 @@ gpgc_vector gpgc_partition::fit_vector(const float* block) {
     int sq = size*size;
     int skipper = size > 32 ? size >> GPGC_SKIP_BITSHIFTS : 1;
     using namespace Eigen;
-    int cols = pow(size / skipper, 2) + 1;
+    int cols = pow(size / skipper, 2);
     int rows = 3;
 
     int* arr_A = gpgc_create_eigen_A(size, skipper, block);
     // Creates the initial matrix as the transpose (easier to send to Eigen map buffer)
     MatrixXi eigen_matrix_A = Map<Matrix<int, Dynamic, Dynamic> >(arr_A, rows, cols);
-    std::cout << eigen_matrix_A.transpose();
 
-    int* matrix_B = gpgc_create_matrix_B(size, skipper, block);
+    int* arr_B = gpgc_create_matrix_B(size, skipper, block);
+    VectorXi eigen_vector_B = Map<VectorXi>(arr_B, cols);
+    Eigen::MatrixXf f_mat = (eigen_matrix_A * eigen_matrix_A.transpose()).cast<float>();
+    //std::cout << eigen_vector_B;
+    Eigen::Vector3f x = (eigen_matrix_A.transpose()).cast<float>().householderQr().solve((eigen_vector_B).cast<float>());
+/*
+ * _matrix_A * eigen_vector_B).cast<float>());
 
     Eigen::Map<Eigen::VectorXf> block_vector(const_cast<float*>(block), sq);
+
     Eigen::VectorXi v(sq), a1(sq), a2(sq), a3(sq);
 
     v = Eigen::VectorXi::LinSpaced(sq, 0, sq-1);
@@ -102,7 +108,7 @@ gpgc_vector gpgc_partition::fit_vector(const float* block) {
     Eigen::MatrixXf f = m.cast<float>();
 
     Eigen::ColPivHouseholderQR<Eigen::MatrixXf> dec(f);  // Convienent Eigen function to solve for x-bar vector. Saves difficult matrix algebra with LU algorithm
-    Eigen::Vector3f x = dec.solve(block_vector);
+    */
     using half_float::half;
     gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2]};
     return short_vector;
