@@ -1,4 +1,6 @@
 #include "gpgc.hpp"
+#include <cstdint>
+#include <numeric>
 
 #define GPGC_SKIP_BITSHIFTS 6
 
@@ -24,12 +26,18 @@ float gpgc_partition::get_entropy(const gpgc_vector& vec, const int* block) cons
             }
             float score = std::abs(cell_diff / gpgc_mu);
             float P_ak = inverse_z_transform(score);
-            float point_info = -1 * std::log2(2.56*P_ak); // Shannon info formula
+            // Max to avoid negative info
+            float point_info = fmax(0.0, -1 * std::log2(2.56*P_ak)); // Shannon info formula
 
-            info += point_info;
+            if(point_info < 0) {
+                std::cerr << "Fuck you at index " << row << " " << cell;
+                exit(1);
+            }
+            info += (long long)point_info;
+
         }
     }
-    float adjusted_info = (long double)info / (size*size + 4);
+    float adjusted_info = info / (size*size + 4);
 
     return adjusted_info;
 }
@@ -93,7 +101,7 @@ gpgc_vector gpgc_partition::fit_vector(const int* block) {
     Eigen::Vector3f x = (eigen_matrix_A.transpose()).cast<float>().householderQr().solve((eigen_vector_B).cast<float>());
 
     using half_float::half;
-    gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2]};
+    gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2], (uint16_t)size};
 
 	delete arr_A;
 	delete arr_B;
