@@ -25,13 +25,13 @@ void gpgc_read(const char* filename, const int size) {
 
 	gpgc_vector* decomp_nodes = new gpgc_vector[header.node_count];
 
+    gpgc_file.seekg(2*GPGC_HEADER_SIZE, std::ios::beg);
 	size_t index = 0;
     while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(uint64_t))) {
 		half_float::half i, j;
 		int16_t k;
 		u_int16_t p_sz;
 		uint64_t* bblock = new uint64_t[4];
-
 		memcpy(bblock, &x, sizeof(struct gpgc_vector));
     
 		p_sz = (u_int16_t) ((0xFFFF000000000000 & bblock[0]) >> 48);
