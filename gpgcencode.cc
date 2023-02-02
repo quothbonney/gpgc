@@ -48,6 +48,7 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
         gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe);
     } else {
 		filled_size += size*size;
+		num_nodes++;
 
         uint16_t encoded_int[4];
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
@@ -169,14 +170,30 @@ std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX,
 }
 
 void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error) {
+
+	// Define our encoding object, set the initial pointer to be right after magic and header 
     gpgc_encoder gpe{
             (uint16_t*) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
-            0
+            GPGC_HEADER_SIZE
     };
 
-	gpgc_compression_paramters::gpgc_max_error = max_error * 50;
+    gpgc_header_t magic_header {
+			GPGC_MAGIC_SIGNATURE,	
+            _dat.width,
+            _dat.height,
+			0
+    };
+
+	// Define the compression parameters in the static namespace to be accessed by the encoder
+	// There may be a better method for this, but I don't know it
+	
 	gpgc_compression_paramters::gpgc_mu        = mu;
+	// If max_error is true (1), define it to be equal to GPGC_MAX_ERROR
+	gpgc_compression_paramters::gpgc_max_error = max_error * GPGC_MAX_ERROR;
 	gpgc_compression_paramters::gpgc_zeta	   = zeta;
+	gpgc_compression_paramters::num_nodes	   = 0;
+
+	// Initialize mosaicing system fragments in std::vector to be accessed later and compressed individually
     std::vector<raster_offset> iterations = iteration_map(_dat.width, maxl2(_dat.width), 0, 0);
 
     std::stringstream fname;
@@ -185,18 +202,10 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
 
     gpe.ez_enc.open(fname.str() + ".log");
 
-    gpgc_header_t magic_header {
-            _dat.width,
-            _dat.height
-    };
 
     uint16_t** rasterBMP = gpgc_read_16(&_dat);
 
 	gpgc_compression_paramters::raster_size = magic_header.height * magic_header.width;
-    uint16_t serialized_header[4];
-    memcpy(&serialized_header, &magic_header, sizeof(struct gpgc_header_t));
-
-    gpgc_encode_64(&gpe, serialized_header);
 
     for(int sz_i = 0; sz_i < iterations.size(); ++sz_i) {
         if(iterations[sz_i].size != iterations[sz_i-1].size) {
@@ -207,6 +216,11 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
         }
         gpgc_partition(iterations[sz_i].size, iterations[sz_i].x, iterations[sz_i].y, rasterBMP, &gpe);
     }
+
+	magic_header.node_count = gpgc_compression_paramters::num_nodes;
+
+	memcpy(gpe.bytestream, &magic_header, sizeof(struct gpgc_header_t));
+
     fwrite(gpe.bytestream, 1, gpe.p, f);
     free(gpe.bytestream);
     gpe.ez_enc.close();

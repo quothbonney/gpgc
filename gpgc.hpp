@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Jack Carson - https://github.com/quothbonney
+ * Copyright (c) 2023, Jack David Carson - https://github.com/quothbonney
  * SPDX-License-Identifier: MIT
  *
  *
@@ -44,7 +44,11 @@
  * gpgc_header_t
  */
 
-#define GPGC_HEADER_SIZE 8 
+#define GPGC_HEADER_SIZE 16 
+
+#define GPGC_MAGIC_SIGNATURE 0x67706763 // ASCII -> Hex for "GPGC"
+#define GPGC_MAGIC_DECIMAL 1735419747
+
 
 /*
  * These parameters are passed from the implementation functions to this namespace
@@ -56,6 +60,8 @@
  *		gpgc_zeta:		Standard deviation of average errors; used to calculate information entropy
  */
 
+#define GPGC_MAX_ERROR 50
+
 namespace gpgc_compression_paramters {
 	static int gpgc_max_error;
 	static int gpgc_mu;
@@ -64,6 +70,8 @@ namespace gpgc_compression_paramters {
 	// Used for progress bar
 	static long raster_size;
 	static long filled_size;
+
+	static int num_nodes;
 }
 
 /*
@@ -72,8 +80,12 @@ namespace gpgc_compression_paramters {
  */
 
 struct gpgc_header_t {
+	uint32_t magic;
+
 	uint32_t width;
 	uint32_t height;
+
+	uint32_t node_count;
 };
 
 /*
