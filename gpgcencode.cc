@@ -1,6 +1,5 @@
 #include "gpgc.hpp"
 #include <cstdint>
-#include <numeric>
 
 #define GPGC_SKIP_BITSHIFTS 6
 
@@ -29,10 +28,6 @@ float gpgc_partition::get_entropy(const gpgc_vector& vec, const int* block) cons
             // Max to avoid negative info
             float point_info = fmax(0.0, -1 * std::log2(2.56*P_ak)); // Shannon info formula
 
-            if(point_info < 0) {
-                std::cerr << "Fuck you at index " << row << " " << cell;
-                exit(1);
-            }
             info += (long long)point_info;
 
         }
@@ -217,15 +212,6 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
     gpe.ez_enc.close();
 }
 
-void gpgc_read(const char* filename, const int size) {
-    std::ifstream gpgc_file(filename, std::ios::binary);
-    int x;
-    while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(u_int16_t))) {
-		//std::cout << (u_int16_t)x << std::endl;
-    }
-
-    gpgc_file.close();
-}
 
 std::array<std::vector<int>, 2> gpgc_decode_offsets(int* sizes, int num_sizes) {
     std::vector<int> x0 = { 0 };

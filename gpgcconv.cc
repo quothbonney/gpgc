@@ -1,7 +1,19 @@
 #include "gpgc.hpp"
 #include <cstdlib>
+#include <thread>
 
 #define STR_ENDS_WITH(S, E) (strcmp(S + strlen(S) - (sizeof(E)-1), E) == 0)
+
+int tif2gpgc(char* inname, char* outname, float zeta, int mu, bool max_error) {
+	if(STR_ENDS_WITH(inname, ".tif")) {
+		gpgc_gdal_data dat = process_file(inname);
+		
+		gpgc_encode(inname, outname, dat, zeta, mu, max_error);
+	}
+	std::cout << "\n\n";
+	return 0;
+
+}
 
 int put_h() {
 	puts("Usage: gpgcconv <infile> <outfile>");
@@ -20,7 +32,7 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	int mu = 20;
+	int mu = 5;
 	double zeta = 0.3;
 	bool is_verbose = false, max_error = true;
 
@@ -38,13 +50,11 @@ int main(int argc, char **argv) {
 	}
 	if(is_verbose) std::cout.rdbuf(NULL);
 	
-	if(STR_ENDS_WITH(argv[1], ".tif")) {
-		gpgc_gdal_data dat = process_file(argv[1]);
+	tif2gpgc(argv[1], argv[2], zeta, mu, max_error);
 
-		
-		if(is_verbose) std::cout.rdbuf(cout_buffer);
-		gpgc_encode(argv[1], argv[2], dat, zeta, mu, max_error);
-	}
+	float progress = 0.f;
+    std::cout << std::endl;
+
 	std::cout.rdbuf(cout_buffer);
 	std::cout << argv[2] << "\t" << argv[2] << ".log\n";
 
