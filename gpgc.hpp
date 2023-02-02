@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include "half/half/half.hpp"
 #include "gpgcmath.h"
+#include "gpgcutil.hpp"
 #include "gdal_priv.h"
 
 
@@ -59,6 +60,10 @@ namespace gpgc_compression_paramters {
 	static int gpgc_max_error;
 	static int gpgc_mu;
 	static float gpgc_zeta;
+	
+	// Used for progress bar
+	static long raster_size;
+	static long filled_size;
 }
 
 /*

@@ -52,12 +52,18 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
         gpgc_partition child3 = gpgc_partition(new_size, xOff, yOff + new_size, bmp, _gpe);
         gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe);
     } else {
-        std::cout << "Encoded leaf node with size " << size << " at " << xOff << " " << yOff <<  ". Entropy=" << entropy << "\n";
+		filled_size += size*size;
 
         uint16_t encoded_int[4];
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
         gpgc_encode_64(_gpe, encoded_int);
         gpgc_easy_write(_gpe, *_encoded_vector, size);
+    
+		if(_gpe->p % 10) {
+			float prog = (float)gpgc_compression_paramters::filled_size / gpgc_compression_paramters::raster_size;
+			print_progress(prog);
+		}
+        std::cout << "\nEncoded leaf node with size " << size << " at " << xOff << " " << yOff <<  ". Entropy=" << entropy << "\033[A\r";
     }
 }
 
@@ -191,6 +197,7 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
 
     uint16_t** rasterBMP = gpgc_read_16(&_dat);
 
+	gpgc_compression_paramters::raster_size = magic_header.height * magic_header.width;
     uint16_t serialized_header[4];
     memcpy(&serialized_header, &magic_header, sizeof(struct gpgc_header_t));
 
@@ -214,7 +221,7 @@ void gpgc_read(const char* filename, const int size) {
     std::ifstream gpgc_file(filename, std::ios::binary);
     int x;
     while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(u_int16_t))) {
-        std::cout << (u_int16_t)x << std::endl;
+		//std::cout << (u_int16_t)x << std::endl;
     }
 
     gpgc_file.close();
