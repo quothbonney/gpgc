@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <sys/types.h>
 
-void gpgc_read(const char* filename, const int size) {
+gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head) {
     std::ifstream gpgc_file(filename, std::ios::binary);
 
 	gpgc_header_t header{};
@@ -22,6 +22,8 @@ void gpgc_read(const char* filename, const int size) {
 	header.height = x_header;
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
 	header.node_count = x_header;
+
+	head = &header;
 
 	gpgc_vector* decomp_nodes = new gpgc_vector[header.node_count];
 
@@ -52,4 +54,41 @@ void gpgc_read(const char* filename, const int size) {
 
 
     gpgc_file.close();
+
+	return decomp_nodes;
 }
+
+int gpgc_decode_offsets(gpgc_vector* dc_vectors, int num_vectors, std::vector<float> x0, std::vector<float> y0) {
+	if(x0.size() != 0 || y0.size() != 0)
+		std::cerr << "Corrupted x0 or y0 vector";
+
+	x0.push_back(0);
+	y0.push_back(0);
+	std::vector<int> b = { 0 };
+
+    std::vector<int>::const_iterator it_b = b.cbegin();
+    std::vector<float>::const_iterator it_y = y0.begin();
+    std::vector<float>::const_iterator it_x = x0.cbegin();
+
+    size_t index = 0;
+    while(index < num_vectors) {
+		int sz_log = maxl2(dc_vectors[index].size);
+        while(b[index] < sz_log) {
+            b[index] = b[index] + 1;
+            for(int i = 0; i < 3; ++i)
+                it_b = b.insert(it_b + index + 1, b[index]);
+
+            it_x = x0.insert(it_x + index + 1, x0[index] + (1 / pow(2, b[index])));
+            it_x = x0.insert(it_x + index + 2, x0[index]);
+            it_x = x0.insert(it_x + index + 2, x0[index]);
+            it_x = x0.insert(it_x + index + 3, x0[index] + (1 / pow(2, b[index])));
+
+            y0.insert(it_y + index + 1, y0[index]);
+            y0.insert(it_y + index + 2, y0[index] + (1 / pow(2, b[index])));
+            y0.insert(it_y + index + 3, y0[index] + (1 / pow(2, b[index])));
+        }
+        index++;
+    }
+	return 0;
+}
+

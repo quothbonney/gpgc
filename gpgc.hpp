@@ -222,16 +222,18 @@ gpgc_gdal_data process_file(const char* filename);
 
 uint16_t** gpgc_read_16(const gpgc_gdal_data* rData);
 
-inline int maxl2(int size);
+inline int maxl2(int size) {
+    return pow(2, std::floor(std::log2(size)));
+}
 
 std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX, int offY);
 
 void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error = true);
 
 
-void gpgc_read(const char* filename, const int size);
+gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head);
 
 
-std::array<std::vector<int>, 2> gpgc_decode_offsets(int* sizes, int num_sizes);
+int gpgc_decode_offsets(gpgc_vector* dc_vectors, int num_vectors, std::vector<float> x0, std::vector<float> y0);
 
 #endif

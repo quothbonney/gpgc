@@ -58,7 +58,11 @@ int main(int argc, char **argv) {
 	std::cout.rdbuf(cout_buffer);
 	std::cout << argv[2] << "\t" << argv[2] << ".log\n";
 
-	gpgc_read(argv[2], 2048);
+	gpgc_header_t decoded_head;
+	gpgc_vector* dcmp_nodes = gpgc_read(argv[2], 2048, &decoded_head);
+
+	std::vector<float> x0, y0;
+	int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head.node_count, x0, y0);
 
 	return 0;
 }
