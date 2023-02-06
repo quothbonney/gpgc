@@ -9,10 +9,20 @@ int tif2gpgc(char* inname, char* outname, float zeta, int mu, bool max_error) {
 		gpgc_gdal_data dat = process_file(inname);
 		
 		gpgc_encode(inname, outname, dat, zeta, mu, max_error);
+		std::cout << outname << "\t" << outname << ".log\n";
 	}
 	std::cout << "\n\n";
 	return 0;
 
+}
+
+int gpgc2png(char* inname, char* outname) {
+	gpgc_header_t decoded_head;
+	gpgc_vector* dcmp_nodes = gpgc_read(inname, 2048, &decoded_head);
+
+	std::vector<float> x0, y0;
+	int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head.node_count, x0, y0);
+	return 0;
 }
 
 int put_h() {
@@ -48,21 +58,15 @@ int main(int argc, char **argv) {
 		if(fl == "--no-max-error") max_error = false;
 	
 	}
+
 	if(is_verbose) std::cout.rdbuf(NULL);
 	
-	tif2gpgc(argv[1], argv[2], zeta, mu, max_error);
+	if(STR_ENDS_WITH(argv[1], ".tif") && STR_ENDS_WITH(argv[2], ".gpgc"))
+		tif2gpgc(argv[1], argv[2], zeta, mu, max_error);
 
-	float progress = 0.f;
-    std::cout << std::endl;
+	if(STR_ENDS_WITH(argv[1], ".gpgc") && STR_ENDS_WITH(argv[2], ".png"))
+		gpgc2png(argv[1], argv[2]);
 
-	std::cout.rdbuf(cout_buffer);
-	std::cout << argv[2] << "\t" << argv[2] << ".log\n";
-
-	gpgc_header_t decoded_head;
-	gpgc_vector* dcmp_nodes = gpgc_read(argv[2], 2048, &decoded_head);
-
-	std::vector<float> x0, y0;
-	int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head.node_count, x0, y0);
 
 	return 0;
 }

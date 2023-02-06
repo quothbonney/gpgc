@@ -14,6 +14,7 @@ gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
 	if(x_header != GPGC_MAGIC_DECIMAL) {
 		header.magic = x_header;
+		std::cout << x_header;
 		exit(1);	
 	}
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
@@ -64,31 +65,32 @@ int gpgc_decode_offsets(gpgc_vector* dc_vectors, int num_vectors, std::vector<fl
 
 	x0.push_back(0);
 	y0.push_back(0);
+    x0.reserve(num_vectors);
+    y0.reserve(num_vectors);
+
+
 	std::vector<int> b = { 0 };
+    b.reserve(10000);
 
-    std::vector<int>::const_iterator it_b = b.cbegin();
-    std::vector<float>::const_iterator it_y = y0.begin();
-    std::vector<float>::const_iterator it_x = x0.cbegin();
-
+    const auto it_b = b.cbegin();
+    const auto it_y = y0.begin();
+    const auto it_x = x0.cbegin();
     size_t index = 0;
-    while(index < num_vectors) {
-		int sz_log = maxl2(dc_vectors[index].size);
-        while(b[index] < sz_log) {
-            b[index] = b[index] + 1;
-            for(int i = 0; i < 3; ++i)
-                it_b = b.insert(it_b + index + 1, b[index]);
+    int sz_log = maxl2(dc_vectors[index].size);
+    while(b[index] < sz_log) {
+        b[index] = b[index] + 1;
+        for(int i = 0; i < 3; ++i)
+            b.insert(it_b + index + 1, b[index]);
 
-            it_x = x0.insert(it_x + index + 1, x0[index] + (1 / pow(2, b[index])));
-            it_x = x0.insert(it_x + index + 2, x0[index]);
-            it_x = x0.insert(it_x + index + 2, x0[index]);
-            it_x = x0.insert(it_x + index + 3, x0[index] + (1 / pow(2, b[index])));
+        x0.insert(it_x + index + 1, x0[index] + (1 / pow(2, b[index])));
+        x0.insert(it_x + index + 2, x0[index]);
+        x0.insert(it_x + index + 3, x0[index] + (1 / pow(2, b[index])));
 
-            y0.insert(it_y + index + 1, y0[index]);
-            y0.insert(it_y + index + 2, y0[index] + (1 / pow(2, b[index])));
-            y0.insert(it_y + index + 3, y0[index] + (1 / pow(2, b[index])));
-        }
-        index++;
+        y0.insert(it_y + index + 1, y0[index]);
+        y0.insert(it_y + index + 2, y0[index] + (1 / pow(2, b[index])));
+        y0.insert(it_y + index + 3, y0[index] + (1 / pow(2, b[index])));
     }
-	return 0;
+
+    return 0;
 }
 
