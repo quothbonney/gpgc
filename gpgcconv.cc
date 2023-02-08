@@ -21,7 +21,19 @@ int gpgc2png(char* inname, char* outname) {
 	gpgc_vector* dcmp_nodes = gpgc_read(inname, 2048, &decoded_head);
 
 	std::vector<float> x0, y0;
-	int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head.node_count, x0, y0);
+	int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);
+
+    for(int i = 0; i < decoded_head.node_count; ++i) {
+        std::cout << x0[i] << "\t" << y0[i] << "\n";
+    }
+    int** raster = gpgc_reconstruct(dcmp_nodes, decoded_head, x0, y0);
+
+    for(int i = 0; i < decoded_head.height; ++i) {
+        for(int j = 0; j < decoded_head.width; ++j) {
+            std::cout << raster[i][j] << " ";
+        }
+        std::cout << "\n";
+    }
 	return 0;
 }
 
@@ -34,13 +46,8 @@ int put_h() {
 }
 
 int main(int argc, char **argv) {
-	if(argc < 3) {
-		puts("Usage: gpgcconv <infile> <outfile>");
-		puts("Examples:");
-		puts("	gpgcconv input.tif output.gpgc [-u Partition Standard Deviation (int)] [-z Partition max entropy (double)");
-		puts("	gpgcconv input.gpgc output.png");
-		exit(1);
-	}
+	if(argc < 3)
+        put_h();
 
 	int mu = 5;
 	double zeta = 0.3;

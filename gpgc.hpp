@@ -233,7 +233,8 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
 
 gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head);
 
+int gpgc_decode_offsets(gpgc_vector* dc_vectors, const gpgc_header_t& header, std::vector<float>& x0, std::vector<float>& y0);
 
-int gpgc_decode_offsets(gpgc_vector* dc_vectors, int num_vectors, std::vector<float> x0, std::vector<float> y0);
+int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std::vector<float>& x0, std::vector<float>& y0);
 
 #endif
