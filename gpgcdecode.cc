@@ -163,12 +163,15 @@ bool save_png(const char* filename, int** image, int width, int height) {
     png_write_info(png_ptr, info_ptr);
     int** rgb_image = new int*[height];
     png_byte *row = new png_byte[width * 3];
+
+    std::vector<unsigned char> color_map = gradient_map(256);
     for (int i = 0; i < height; i++) {
         rgb_image[i] = new int[width * 3];
         for (int j = 0; j < width; j++) {
-            row[j * 3] = condense_for_png(image[i][j]);      // red channel
-            row[j * 3 + 1] = 0;    // green channel
-            row[j * 3 + 2] = 0;    // blue channel
+            uint8_t value = condense_for_png(image[i][j]);
+            row[j * 3 + 0] = color_map[value * 3 + 0];     // red channel
+            row[j * 3 + 1] = color_map[value * 3 + 1];;    // green channel
+            row[j * 3 + 2] = color_map[value * 3 + 2];;    // blue channel
         }
         png_write_row(png_ptr, row);
     }
