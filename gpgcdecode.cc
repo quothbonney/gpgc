@@ -135,63 +135,64 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
     return reras;
 }
 
-
 bool save_png(const char* filename, int** image, int width, int height) {
     FILE* fp = std::fopen(filename, "wb");
     if (!fp) {
         return false;
     }
 
+    // Get largest value in the raster and to figure out how much each point needs to be divided by to get a value <255 to fit into PNG uint8
     uint16_t max_int = 0;
     for(int i = 0; i < height; ++i) {
         for(int j = 0; j < width; ++j)
             image[i][j] > max_int ? max_int = image[i][j] : max_int = max_int;
     }
     float shrink_coeff = (float) max_int/ 256;
-    auto condense_for_png = [](int x, float coeff) {
-        return (float) x / coeff;
+    auto condense_for_png = [shrink_coeff](int x) {
+        return (int) (x / shrink_coeff);
     };
-
-
-    png_structp png_ptr =
-            png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (!png_ptr) {
-        std::fclose(fp);
-        return false;
-    }
-
+    // Initialize the PNG write struct
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_infop info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr) {
-        png_destroy_write_struct(&png_ptr, nullptr);
-        std::fclose(fp);
-        return false;
-    }
-
-    if (setjmp(png_jmpbuf(png_ptr))) {
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        std::fclose(fp);
-        return false;
-    }
-
     png_init_io(png_ptr, fp);
 
-    png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_GRAY,
-                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-                 PNG_FILTER_TYPE_DEFAULT);
+    // Set the image parameters
+    png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
     png_write_info(png_ptr, info_ptr);
-
-    png_bytep row = new png_byte[width];
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            row[x] = static_cast<png_byte>(condense_for_png(image[y][x], shrink_coeff));
+    int** rgb_image = new int*[height];
+    png_byte *row = new png_byte[width * 3];
+    for (int i = 0; i < height; i++) {
+        rgb_image[i] = new int[width * 3];
+        for (int j = 0; j < width; j++) {
+            row[j * 3] = condense_for_png(image[i][j]);      // red channel
+            row[j * 3 + 1] = 0;    // green channel
+            row[j * 3 + 2] = 0;    // blue channel
         }
         png_write_row(png_ptr, row);
     }
 
-    delete[] row;
+
+
+    // Allocate memory for the row pointers
+    png_bytep* row_pointers = new png_bytep[height];
+    for (int i = 0; i < height; i++) {
+        row_pointers[i] = reinterpret_cast<png_byte*>(rgb_image[i]);
+    }
+
+    // Write the image data
+    //png_write_info(png_ptr, info_ptr);
+    //png_write_image(png_ptr, row_pointers);
     png_write_end(png_ptr, nullptr);
+
+    // Clean up
+    delete[] row_pointers;
+    for (int i = 0; i < height; i++) {
+        delete[] image[i];
+    }
+    delete[] image;
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    std::fclose(fp);
-    return true;
+
+    return 0;
 }
