@@ -176,7 +176,7 @@ int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, 
 
 	gpgc_compression_paramters::raster_size = magic_header.height * magic_header.width;
 
-
+    gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe);
 	magic_header.node_count = gpgc_compression_paramters::num_nodes;
 
 	memcpy(gpe.bytestream, &magic_header, sizeof(struct gpgc_header_t));

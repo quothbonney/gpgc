@@ -18,7 +18,7 @@ int tif2gpgc(char* inname, char* outname, float zeta, int mu, bool max_error) {
 
 int gpgc2png(char* inname, char* outname) {
     gpgc_header_t decoded_head;
-    gpgc_vector* dcmp_nodes = gpgc_read(inname, 512, &decoded_head);
+    gpgc_vector* dcmp_nodes = gpgc_read(inname, &decoded_head);
 
     std::vector<float> x0, y0;
     int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);

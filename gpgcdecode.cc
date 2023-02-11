@@ -14,7 +14,7 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
 	if(x_header != GPGC_MAGIC_DECIMAL) {
 		header.magic = x_header;
-		std::cout << x_header;
+		std::cout << "Incorrect GPGC Magic Located " <<x_header;
 		exit(1);	
 	}
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
