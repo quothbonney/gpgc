@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <sys/types.h>
 
-gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head) {
+gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
     std::ifstream gpgc_file(filename, std::ios::binary);
 
 	gpgc_header_t header{};

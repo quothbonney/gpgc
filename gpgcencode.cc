@@ -127,7 +127,7 @@ gpgc_gdal_data process_file(const char* filename) {
 }
 
 
-uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
+uint16_t** gpgc_read_DEM(const gpgc_gdal_data* rData) {
     auto** block = new uint16_t*[rData->height];
     for(int row = 0; row < rData->height; ++row) {
         block[row] = new uint16_t[rData->width];
@@ -139,34 +139,7 @@ uint16_t** gpgc_read_16(const gpgc_gdal_data* rData) {
 }
 
 
-std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX, int offY) {
-    static std::vector<raster_offset> iterations;
-    if(offX >= raster_size - 1 || offY >= raster_size - 1)
-        return iterations;
-
-    if(offX + it_size == raster_size || offY + it_size == raster_size) {
-        iterations.emplace_back(offX, offY, it_size);
-        return iterations;
-    } else if(offX + it_size < raster_size && offY + it_size < raster_size) {
-        int new_size = it_size;
-        iterations.emplace_back(offX, offY, it_size);
-
-        iteration_map(raster_size, new_size, offX + it_size, offY);
-        iteration_map(raster_size, new_size, offX, offY + it_size);
-        iteration_map(raster_size, new_size, offX + it_size, offY + it_size);
-    } else {
-        int new_size = it_size / 2;
-        iteration_map(raster_size, new_size, offX, offY);
-        iteration_map(raster_size, new_size, offX + new_size, offY);
-        iteration_map(raster_size, new_size, offX, offY + new_size);
-        iteration_map(raster_size, new_size, offX + new_size, offY + new_size);
-    }
-
-
-    return iterations;
-}
-
-void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error) {
+int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error) {
 
 	// Define our encoding object, set the initial pointer to be right after magic and header 
     gpgc_encoder gpe{
@@ -191,7 +164,6 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
 	gpgc_compression_paramters::num_nodes	   = 0;
 
 	// Initialize mosaicing system fragments in std::vector to be accessed later and compressed individually
-    std::vector<raster_offset> iterations = iteration_map(_dat.width, maxl2(_dat.width), 0, 0);
 
     std::stringstream fname;
     fname << std::filesystem::current_path().c_str() << "/" << out_filename;
@@ -200,19 +172,10 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
     gpe.ez_enc.open(fname.str() + ".log");
 
 
-    uint16_t** rasterBMP = gpgc_read_16(&_dat);
+    uint16_t** rasterBMP = gpgc_read_DEM(&_dat);
 
 	gpgc_compression_paramters::raster_size = magic_header.height * magic_header.width;
 
-    for(int sz_i = 0; sz_i < iterations.size(); ++sz_i) {
-        if(iterations[sz_i].size != iterations[sz_i-1].size) {
-            size_t extra = 0;
-            while(iterations[sz_i + extra].size == iterations[sz_i].size) extra++;
-            //gpgc_encode_size(&gpe, std::log2(iterations[sz_i].size));
-            gpgc_easy_size(&gpe, iterations[sz_i].size, extra);
-        }
-        gpgc_partition(iterations[sz_i].size, iterations[sz_i].x, iterations[sz_i].y, rasterBMP, &gpe);
-    }
 
 	magic_header.node_count = gpgc_compression_paramters::num_nodes;
 
@@ -221,6 +184,8 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
     fwrite(gpe.bytestream, 1, 2*gpe.p, f);
     free(gpe.bytestream);
     gpe.ez_enc.close();
+
+	return 0;
 }
 
 

@@ -157,7 +157,7 @@ struct gpgc_partition {
 	int xOff, yOff, size;
 
 	uint16_t** bmp; // Raw raster data passed by pointer for use
-					//
+
 	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data);
 
 private:
@@ -212,31 +212,58 @@ inline void gpgc_easy_size(gpgc_encoder* _gpe, int size, int num) {
 }
 
 /*
- * NOT YET IMPLEMENTED
- * Decode read 64 bits
+ * Uses GDAL to grab information from GeoTIFF/DTED file header
+ * Returns gpgc_gdal_data with relevant geotransformdata
  */
-inline void gpgc_decode_64(gpgc_encoder* _gpe) {
-	unsigned int a = _gpe->bytestream[(_gpe->p)++];
-}
-
 gpgc_gdal_data process_file(const char* filename);
 
-uint16_t** gpgc_read_16(const gpgc_gdal_data* rData);
+/*
+ * Using GDAL RasterBand* abstraction to read raw 16-bit integers
+ * from DEM input and return double int pointer. Double pointer forms BMP object that all partitions reference.
+ * Looking to be deprecated with custom TIFF reader to work for embedded systems
+ */
+uint16_t** gpgc_read_DEM(const gpgc_gdal_data* rData);
 
+/*
+ * Returns floor of log2. Used heavily in decoding to reconstruct sizes
+ */
 inline int maxl2(int size) {
     return pow(2, std::floor(std::log2(size)));
 }
 
-std::vector<raster_offset> iteration_map(int raster_size, int it_size, int offX, int offY);
+/*
+ * Encodes data from an input DEM file into the .GPGC specification. The function takes two char* for input and output filenames,
+ * GDAL header data to be passed into the new header, as well as optional global compression parameters zeta, mu, and max_error, which
+ * define respectively the maximum entropy, the standard deviation of residuals, and the option to consider the maximum residual.
+ *
+ * The function will create a `.gpgc` and `.gpgc.log` file in its attempt to compress the data. If the encoding was successful, it will
+ * return 0, otherwise it will return 1.
+ */
+int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error = true);
 
-void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, const float zeta, const int mu, bool max_error = true);
+/*
+ * Decodes binary in filename to form reconstructed pointer array of gpgc_vectors needed for re-rasterization. Function manually does Bitwise AND
+ * and bitshifts from a 64 bit object; tests are needed to validate this, but for now it works. Skips `sizeof(gpgc_header_t)` bits in the encoded file and
+ * encodes them into the `gpgc_header_t` pointer structure passed by pointer to the function.
+ */
+gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head);
 
-
-gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head);
-
+/*
+ * Relies on data provided by the `gpgc_read()` function to supply vectors and sizes. Fills two arrays x0, y0 with the offsets for
+ * each vector. Uses queue-based system for ultra-fast reconstruction of a depth first quadtree search for positioning in two
+ * dimensions. Header must be passed for memory reservations by `header.node_count`
+ */
 int gpgc_decode_offsets(gpgc_vector* dc_vectors, const gpgc_header_t& header, std::vector<float>& x0, std::vector<float>& y0);
 
+/*
+ * Finally fills a datablock with reconstructed partitions by the orthogonal vector provided in gpgc_read() at offset
+ * calculated with gpgc_decode_offsets. Once the datablock is created, it is up to the user what is to be done with it. Relies
+ * on the same parameters as gpgc_decode_offsets().
+ */
 int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std::vector<float>& x0, std::vector<float>& y0);
 
+/*
+ * Saves data in PNG format. Looking to move to gpgcutil.hpp
+ */
 bool save_png(const char* filename, int** image, int width, int height);
 #endif
