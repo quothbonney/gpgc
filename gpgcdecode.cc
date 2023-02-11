@@ -163,8 +163,8 @@ bool save_png(const char* filename, int** image, int width, int height) {
     png_write_info(png_ptr, info_ptr);
     int** rgb_image = new int*[height];
     png_byte *row = new png_byte[width * 3];
-
-    std::vector<unsigned char> color_map = gradient_map(256);
+    auto hex_codes = CM_DEFAULT;
+    std::vector<unsigned char> color_map = gradient_map(256, hex_codes);
     for (int i = 0; i < height; i++) {
         rgb_image[i] = new int[width * 3];
         for (int j = 0; j < width; j++) {
