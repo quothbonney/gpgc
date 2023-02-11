@@ -28,13 +28,6 @@ int gpgc2png(char* inname, char* outname) {
     }
     int** raster = gpgc_reconstruct(dcmp_nodes, decoded_head, x0, y0);
 
-    for(int i = 0; i < decoded_head.height; ++i) {
-        for(int j = 0; j < decoded_head.width; ++j) {
-            std::cout << raster[i][j] << " ";
-        }
-        std::cout << "\n";
-    }
-
     save_png(outname, raster, decoded_head.width, decoded_head.height);
     return 0;
 }

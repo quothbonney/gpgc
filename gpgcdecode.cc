@@ -120,10 +120,6 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
         reras[i] = new int[header.width];
     }
 
-    auto condense_for_png = [](int x) {
-        return x / 2 % 255;
-    };
-
     for(int index = 0; index < header.node_count; index++) {
         int xoff = x0[index] * header.width;
         int yoff = y0[index] * header.height;
@@ -131,8 +127,8 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
         int sz = dc_vectors[index].size;
         for(int y = 0; y < sz; ++y){
             for(int x = 0; x < sz; ++x) {
-                int val = (dc_vectors[index].i*x) + (dc_vectors[index].j*y) + (dc_vectors[index].k);
-                reras[yoff+y][xoff+x] = condense_for_png(val);
+                int val = (dc_vectors[index].i*y) + (dc_vectors[index].j*x) + (dc_vectors[index].k);
+                reras[yoff+y][xoff+x] = val;
             }
         }
     }
@@ -145,6 +141,17 @@ bool save_png(const char* filename, int** image, int width, int height) {
     if (!fp) {
         return false;
     }
+
+    uint16_t max_int = 0;
+    for(int i = 0; i < height; ++i) {
+        for(int j = 0; j < width; ++j)
+            image[i][j] > max_int ? max_int = image[i][j] : max_int = max_int;
+    }
+    float shrink_coeff = (float) max_int/ 256;
+    auto condense_for_png = [](int x, float coeff) {
+        return (float) x / coeff;
+    };
+
 
     png_structp png_ptr =
             png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -177,7 +184,7 @@ bool save_png(const char* filename, int** image, int width, int height) {
     png_bytep row = new png_byte[width];
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            row[x] = static_cast<png_byte>(image[y][x]);
+            row[x] = static_cast<png_byte>(condense_for_png(image[y][x], shrink_coeff));
         }
         png_write_row(png_ptr, row);
     }
