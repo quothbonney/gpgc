@@ -1,6 +1,7 @@
-//
-// Created by quothbonney on 1/30/23.
-//
+/*
+ * Copyright (c) 2023, Jack David Carson - https://github.com/quothbonney
+ * SPDX-License-Identifier: MIT
+ */
 
 #ifndef GPGC_GPGCMATH_H
 #define GPGC_GPGCMATH_H
@@ -14,10 +15,13 @@ extern "C"
 #include <stdlib.h>
 #include <math.h>
 
-int* gpgc_create_matrix_B(int partition_size, int skipper, const int* block);
-
+// Calculates matrix A (explained in paper) to be passed by pointer to Eigen::Dense initializer
 int* gpgc_create_matrix_A(int partition_size, int skipper, const int* block);
 
+// Calculates matrix B for Eigen::Dense initializer
+int* gpgc_create_matrix_B(int partition_size, int skipper, const int* block);
+
+// Calculates integral of probability density function to convert z score to actual probability
 double inverse_z_transform(double z_score);
 
 #endif //GPGC_GPGCMATH_H

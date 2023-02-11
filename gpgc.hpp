@@ -31,11 +31,11 @@
 #include <fstream>
 #include <filesystem>
 #include <sys/types.h>
+#include <png.h>
 #include "half/half/half.hpp"
 #include "gpgcmath.h"
 #include "gpgcutil.hpp"
 #include "gdal_priv.h"
-#include <png.h>
 
 
 /*
