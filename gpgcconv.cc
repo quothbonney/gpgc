@@ -17,11 +17,11 @@ int tif2gpgc(char* inname, char* outname, float zeta, int mu, bool max_error) {
 }
 
 int gpgc2png(char* inname, char* outname) {
-	gpgc_header_t decoded_head;
-	gpgc_vector* dcmp_nodes = gpgc_read(inname, 2048, &decoded_head);
+    gpgc_header_t decoded_head;
+    gpgc_vector* dcmp_nodes = gpgc_read(inname, 512, &decoded_head);
 
-	std::vector<float> x0, y0;
-	int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);
+    std::vector<float> x0, y0;
+    int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);
 
     for(int i = 0; i < decoded_head.node_count; ++i) {
         std::cout << x0[i] << "\t" << y0[i] << "\n";
@@ -34,7 +34,9 @@ int gpgc2png(char* inname, char* outname) {
         }
         std::cout << "\n";
     }
-	return 0;
+
+    save_png(outname, raster, decoded_head.width, decoded_head.height);
+    return 0;
 }
 
 int put_h() {

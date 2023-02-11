@@ -35,6 +35,7 @@
 #include "gpgcmath.h"
 #include "gpgcutil.hpp"
 #include "gdal_priv.h"
+#include <png.h>
 
 
 /*
@@ -237,4 +238,5 @@ int gpgc_decode_offsets(gpgc_vector* dc_vectors, const gpgc_header_t& header, st
 
 int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std::vector<float>& x0, std::vector<float>& y0);
 
+bool save_png(const char* filename, int** image, int width, int height);
 #endif

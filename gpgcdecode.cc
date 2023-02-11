@@ -22,7 +22,7 @@ gpgc_vector* gpgc_read(const char* filename, const int size, gpgc_header_t* head
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
 	header.height = x_header;
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
-	header.node_count = x_header / 2;
+	header.node_count = x_header;
 
 	*head = header;
 
@@ -120,6 +120,10 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
         reras[i] = new int[header.width];
     }
 
+    auto condense_for_png = [](int x) {
+        return x / 2 % 255;
+    };
+
     for(int index = 0; index < header.node_count; index++) {
         int xoff = x0[index] * header.width;
         int yoff = y0[index] * header.height;
@@ -127,10 +131,60 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
         int sz = dc_vectors[index].size;
         for(int y = 0; y < sz; ++y){
             for(int x = 0; x < sz; ++x) {
-                int val = (dc_vectors->i*x) + (dc_vectors->j*y) + (dc_vectors->k);
-                reras[yoff+y][xoff+x] = val;
+                int val = (dc_vectors[index].i*x) + (dc_vectors[index].j*y) + (dc_vectors[index].k);
+                reras[yoff+y][xoff+x] = condense_for_png(val);
             }
         }
     }
     return reras;
+}
+
+
+bool save_png(const char* filename, int** image, int width, int height) {
+    FILE* fp = std::fopen(filename, "wb");
+    if (!fp) {
+        return false;
+    }
+
+    png_structp png_ptr =
+            png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if (!png_ptr) {
+        std::fclose(fp);
+        return false;
+    }
+
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        png_destroy_write_struct(&png_ptr, nullptr);
+        std::fclose(fp);
+        return false;
+    }
+
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        std::fclose(fp);
+        return false;
+    }
+
+    png_init_io(png_ptr, fp);
+
+    png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_GRAY,
+                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+                 PNG_FILTER_TYPE_DEFAULT);
+
+    png_write_info(png_ptr, info_ptr);
+
+    png_bytep row = new png_byte[width];
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            row[x] = static_cast<png_byte>(image[y][x]);
+        }
+        png_write_row(png_ptr, row);
+    }
+
+    delete[] row;
+    png_write_end(png_ptr, nullptr);
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    std::fclose(fp);
+    return true;
 }

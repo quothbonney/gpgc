@@ -218,7 +218,7 @@ void gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat,
 
 	memcpy(gpe.bytestream, &magic_header, sizeof(struct gpgc_header_t));
 
-    fwrite(gpe.bytestream, 1, gpe.p, f);
+    fwrite(gpe.bytestream, 1, 2*gpe.p, f);
     free(gpe.bytestream);
     gpe.ez_enc.close();
 }
