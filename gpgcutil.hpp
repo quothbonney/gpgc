@@ -2,7 +2,8 @@
 #ifndef GPGC_GPGCUTIL_H
 #define GPGC_GPGCUTIL_H
 
-#define CM_DEFAULT std::vector<std::string>{"#1C0B4B", "#237672", "#FFF700"}
+#define CM_VERDIGRIS std::vector<std::string>{"#1C0B4B", "#237672", "#FFF700"}
+#define CM_BW std::vector<std::string>{"#000000", "#FFFFFF"}
 
 #include <iostream>
 #include <vector>

@@ -49,7 +49,7 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 		memcpy(&i, &i_int, sizeof(i));
 		memcpy(&j, &j_int, sizeof(i));
 
-		decomp_nodes[index] = gpgc_vector{i, j, k, p_sz};
+		decomp_nodes[index] = gpgc_vector{i, j, k, (u_int16_t)p_sz};
 		delete[] bblock;
         index++;
     }
@@ -74,8 +74,6 @@ int gpgc_decode_offsets(gpgc_vector* dc_vectors, const gpgc_header_t& header, st
     y0.reserve(num_vectors*2);
     b.reserve(num_vectors * 4);
 
-    std::vector<int> logsizes;
-    logsizes.reserve(num_vectors*2);
 
     // Define iterators for index positions
     const auto it_b = b.cbegin();
@@ -83,19 +81,8 @@ int gpgc_decode_offsets(gpgc_vector* dc_vectors, const gpgc_header_t& header, st
     const auto it_x = x0.cbegin();
     size_t index = 0;
 
-    for(int i = 0; i < num_vectors; ++i) {
-        if(dc_vectors[i].size == 0) {
-            num_vectors = i;
-            break;
-        }
-        int logsize = std::log2(header.height / dc_vectors[i].size);
-        logsizes.push_back(logsize);
-    }
     while (index < num_vectors) {
-        if(index % 10 == 0) {
-            index = index;
-        }
-        while (b[index] < logsizes[index]) {
+        while (b[index] < dc_vectors[index].size) {
             b[index] = b[index] + 1;
             for (int i = 0; i < 3; ++i)
                 b.insert(it_b + index + 1, b[index]);
@@ -125,8 +112,9 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
         int yoff = y0[index] * header.height;
 
         int sz = dc_vectors[index].size;
-        for(int y = 0; y < sz; ++y){
-            for(int x = 0; x < sz; ++x) {
+        int real_size = header.height * (1 / pow(2, sz));
+        for(int y = 0; y < real_size; ++y){
+            for(int x = 0; x < real_size; ++x) {
                 int val = (dc_vectors[index].i*y) + (dc_vectors[index].j*x) + (dc_vectors[index].k);
                 reras[yoff+y][xoff+x] = val;
             }
@@ -163,7 +151,7 @@ bool save_png(const char* filename, int** image, int width, int height) {
     png_write_info(png_ptr, info_ptr);
     int** rgb_image = new int*[height];
     png_byte *row = new png_byte[width * 3];
-    auto hex_codes = CM_DEFAULT;
+    auto hex_codes = CM_BW;
     std::vector<unsigned char> color_map = gradient_map(256, hex_codes);
     for (int i = 0; i < height; i++) {
         rgb_image[i] = new int[width * 3];

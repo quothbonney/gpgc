@@ -154,11 +154,11 @@ void gpgc_easy_write(gpgc_encoder *_gpe, gpgc_vector fit, int size);
  * Object for each partition used to hold information about its location in the raster
  */
 struct gpgc_partition {
-	int xOff, yOff, size;
+	int xOff, yOff, size, level;
 
 	uint16_t** bmp; // Raw raster data passed by pointer for use
 
-	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data);
+	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level);
 
 private:
 	// Returns area for partition in a concatenated int*

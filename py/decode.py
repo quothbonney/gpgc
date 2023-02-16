@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # original = read_gtif(sys.argv[3]);
     # ate_bicubic(decompressed);
 
-    im = plt.imshow(decompressed, cmap=cm.terrain)
+    im = plt.imshow(decompressed )
 
     plt.colorbar(im)
 

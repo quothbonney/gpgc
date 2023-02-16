@@ -23,12 +23,10 @@ int gpgc2png(char* inname, char* outname) {
     std::vector<float> x0, y0;
     int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);
 
-    for(int i = 0; i < decoded_head.node_count; ++i) {
-        std::cout << x0[i] << "\t" << y0[i] << "\n";
-    }
     int** raster = gpgc_reconstruct(dcmp_nodes, decoded_head, x0, y0);
 
     save_png(outname, raster, decoded_head.width, decoded_head.height);
+	std::cout << outname;
     return 0;
 }
 

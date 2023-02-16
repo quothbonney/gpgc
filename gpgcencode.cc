@@ -1,10 +1,10 @@
 #include "gpgc.hpp"
 #include <cstdint>
 
-#define GPGC_SKIP_BITSHIFTS 6
+#define GPGC_SKIP_BITSHIFTS 5
 
-gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data)
-        : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) {
+gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level)
+        : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) , level(_level) {
     const int* _partition_block = get_block();
     const gpgc_vector fit = fit_vector(_partition_block);
     float entropy = get_entropy(fit, _partition_block);
@@ -41,11 +41,11 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
 	using namespace gpgc_compression_paramters;
     if(entropy > gpgc_zeta &&  size >= 4) {
         int new_size = size / 2;
-
-        gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe);
-        gpgc_partition child2 = gpgc_partition(new_size, xOff + new_size, yOff, bmp, _gpe);
-        gpgc_partition child3 = gpgc_partition(new_size, xOff, yOff + new_size, bmp, _gpe);
-        gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe);
+        level++;
+        gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe, level);
+        gpgc_partition child2 = gpgc_partition(new_size, xOff + new_size, yOff, bmp, _gpe, level);
+        gpgc_partition child3 = gpgc_partition(new_size, xOff, yOff + new_size, bmp, _gpe, level);
+        gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe, level);
     } else {
 		filled_size += size*size;
 		num_nodes++;
@@ -103,7 +103,7 @@ gpgc_vector gpgc_partition::fit_vector(const int* block) {
     Eigen::Vector3f x = (eigen_matrix_A.transpose()).cast<float>().householderQr().solve((eigen_vector_B).cast<float>());
 
     using half_float::half;
-    gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2], (uint16_t)size};
+    gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2], (uint16_t)level};
 
 	delete arr_A;
 	delete arr_B;
@@ -176,7 +176,7 @@ int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, 
 
 	gpgc_compression_paramters::raster_size = magic_header.height * magic_header.width;
 
-    gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe);
+    gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe, 0);
 	magic_header.node_count = gpgc_compression_paramters::num_nodes;
 
 	memcpy(gpe.bytestream, &magic_header, sizeof(struct gpgc_header_t));
