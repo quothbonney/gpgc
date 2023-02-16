@@ -113,8 +113,8 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
 
         int sz = dc_vectors[index].size;
         int real_size = header.height * (1 / pow(2, sz));
-        for(int y = 0; y < real_size; ++y){
-            for(int x = 0; x < real_size; ++x) {
+        for(int y = 0; y <= real_size && y+yoff < header.height; ++y){
+            for(int x = 0; x <= real_size && x+xoff < header.width; ++x) {
                 int val = (dc_vectors[index].i*y) + (dc_vectors[index].j*x) + (dc_vectors[index].k);
                 reras[yoff+y][xoff+x] = val;
             }
@@ -130,10 +130,12 @@ bool save_png(const char* filename, int** image, int width, int height) {
     }
 
     // Get largest value in the raster and to figure out how much each point needs to be divided by to get a value <255 to fit into PNG uint8
-    uint16_t max_int = 0;
+    int max_int = 0;
     for(int i = 0; i < height; ++i) {
-        for(int j = 0; j < width; ++j)
-            image[i][j] > max_int ? max_int = image[i][j] : max_int = max_int;
+        for(int j = 0; j < width; ++j) {
+            image[i][j] > max_int && image[i][j] < 30'000 ? max_int = image[i][j] : max_int = max_int;
+            if (max_int > 1000) {}
+        }
     }
     float shrink_coeff = (float) max_int/ 256;
     auto condense_for_png = [shrink_coeff](int x) {
