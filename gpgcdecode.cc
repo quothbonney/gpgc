@@ -38,7 +38,7 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 		memcpy(bblock, &x, sizeof(struct gpgc_vector));
     
 		p_sz = (u_int16_t) ((0xFFFF000000000000 & bblock[0]) >> 48);
-		k = (int16_t) ((0x0000FFFF00000000 & bblock[0]) >> 32);
+		k = (u_int16_t) ((0x0000FFFF00000000 & bblock[0]) >> 32);
 		// Half precision float library wont allow direct recast to float
 		// Memory must be manually bitshifted. This puts the representation of
 		// the half float into a 16 bit integer and then forces it into a half-
@@ -116,6 +116,13 @@ int** gpgc_reconstruct(gpgc_vector* dc_vectors, const gpgc_header_t& header, std
         for(int y = 0; y <= real_size && y+yoff < header.height; ++y){
             for(int x = 0; x <= real_size && x+xoff < header.width; ++x) {
                 int val = (dc_vectors[index].i*y) + (dc_vectors[index].j*x) + (dc_vectors[index].k);
+                val = std::max(val, 0);
+                if(val < 0 || val > 1000) {
+                    float ix = dc_vectors[index].i;
+                    float jx = dc_vectors[index].j;
+                    float kx = dc_vectors[index].k;
+                    std::cout << "Odd value.";
+                }
                 reras[yoff+y][xoff+x] = val;
             }
         }

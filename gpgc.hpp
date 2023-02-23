@@ -95,7 +95,7 @@ struct gpgc_header_t {
  */
 struct gpgc_vector{
 	half_float::half i, j;
-    int16_t k;
+    u_int16_t k;
     u_int16_t size;
 };
 

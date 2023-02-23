@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <thread>
 
-#define __GPGC_DEBUG_VERBOSE
+//#define __GPGC_DEBUG_VERBOSE
 
 #define STR_ENDS_WITH(S, E) (strcmp(S + strlen(S) - (sizeof(E)-1), E) == 0)
 
