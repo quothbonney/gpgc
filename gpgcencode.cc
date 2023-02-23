@@ -5,6 +5,9 @@
 
 gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level)
         : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) , level(_level) {
+    if(gpgc_compression_paramters::num_nodes == 70) {
+        std::cout << "test";
+    }
     const int* _partition_block = get_block();
     const gpgc_vector fit = fit_vector(_partition_block);
     float entropy = get_entropy(fit, _partition_block);
@@ -50,6 +53,7 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
 		filled_size += size*size;
 		num_nodes++;
 
+
         uint16_t encoded_int[4];
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
         gpgc_encode_64(_gpe, encoded_int);
@@ -79,8 +83,11 @@ int* gpgc_partition::get_block() const {
     auto* block = new int[sq];
 
     for(size_t row = 0; row < size; ++row) {
-        for(size_t cell = 0; cell < size; ++cell)
-            block[(row * size) + cell] = bmp[row+yOff][cell + xOff];
+        for(size_t cell = 0; cell < size; ++cell) {
+            int val = bmp[row + yOff][cell + xOff];
+            val > 1000 ? val = 0 : val = val;
+            block[(row * size) + cell] = val;
+        }
     }
     return block;
 }
@@ -103,7 +110,7 @@ gpgc_vector gpgc_partition::fit_vector(const int* block) {
     Eigen::Vector3f x = (eigen_matrix_A.transpose()).cast<float>().householderQr().solve((eigen_vector_B).cast<float>());
 
     using half_float::half;
-    gpgc_vector short_vector{(half)x[0], (half)x[1], (int16_t)x[2], (uint16_t)level};
+    gpgc_vector short_vector{(half)x[0], (half)x[1], (u_int16_t)std::max(x[2],0.f), (uint16_t)level};
 
 	delete arr_A;
 	delete arr_B;

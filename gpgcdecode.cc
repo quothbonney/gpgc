@@ -32,9 +32,9 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 	size_t index = 0;
     while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(uint64_t))) {
 		half_float::half i, j;
-		int16_t k;
+		u_int16_t k;
 		u_int16_t p_sz;
-		uint64_t* bblock = new uint64_t[4];
+		u_int64_t* bblock = new uint64_t[4];
 		memcpy(bblock, &x, sizeof(struct gpgc_vector));
     
 		p_sz = (u_int16_t) ((0xFFFF000000000000 & bblock[0]) >> 48);
