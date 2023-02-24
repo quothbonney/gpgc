@@ -75,4 +75,9 @@ for elem in 1:length(x0)
     end
 end
 
-plt = heatmap(decompressed, size=(800, 800), aspect_ratio=:equal, show=true)
+plt = heatmap(decompressed, size=(800, 800), aspect_ratio=:equal)
+
+display(plt)
+
+sleep(100)
+savefig("output.png")
