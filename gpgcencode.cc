@@ -53,10 +53,9 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
 		filled_size += size*size;
 		num_nodes++;
 
-
-        uint16_t encoded_int[4];
+        gpgc_vector encoded_int;
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
-        gpgc_encode_64(_gpe, encoded_int, _encoded_vector->size);
+        //gpgc_encode_64(_gpe, encoded_int, _encoded_vector->size);
         gpgc_easy_write(_gpe, *_encoded_vector, size);
     
 		if(_gpe->p % 10) {
