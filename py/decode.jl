@@ -1,5 +1,5 @@
 using Plots
-
+println("Hello world!")
 data = []
 vectors = []
 max_size = 0
@@ -74,6 +74,8 @@ for elem in 1:length(x0)
         end
     end
 end
+
+println("Hello world!")
 
 plt = heatmap(decompressed, size=(800, 800), aspect_ratio=:equal)
 
