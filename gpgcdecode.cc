@@ -26,35 +26,13 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 
 	*head = header;
 
-	gpgc_vector* decomp_nodes = new gpgc_vector[header.node_count];
+	gpgc_vector* decomp_nodes = new gpgc_vector[2 * header.node_count];
 
     gpgc_file.seekg(2*GPGC_HEADER_SIZE, std::ios::beg);
 	size_t index = 0;
 	printf("hello world");
     while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(struct gpgc_vector))) {
-		half_float::half i, j;
-		u_int16_t k;
-		u_int8_t p_sz;
-
-        char* serialized_vector = (char*)malloc(sizeof(struct gpgc_vector));
-        u_int64_t* bblock = new uint64_t[4];
-		memcpy(serialized_vector, &x, sizeof(struct gpgc_vector));
-
-        memcpy(&p_sz, serialized_vector, sizeof(u_int8_t)); // Copy first 8 bits into p_sz
-		p_sz = (u_int8_t) ((0xFF000000000000 & *serialized_vector) >> 40);
-		k = (u_int16_t) ((0x00FFFF00000000 & *serialized_vector) >> 32);
-		// Half precision float library wont allow direct recast to float
-		// Memory must be manually bitshifted. This puts the representation of
-		// the half float into a 16 bit integer and then forces it into a half-
-		// float container
-		auto j_int = (int16_t) ((0x000000FFFF0000 & *serialized_vector) >> 16);
-		auto i_int = (int16_t) ((0x0000000000FFFF & *serialized_vector) >> 0);
-
-		memcpy(&i, &i_int, sizeof(i));
-		memcpy(&j, &j_int, sizeof(i));
-
-		decomp_nodes[index] = gpgc_vector{i, j, k, (u_int8_t)p_sz};
-		delete[] bblock;
+		decomp_nodes[index] = x;
         index++;
     }
 

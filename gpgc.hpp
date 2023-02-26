@@ -183,7 +183,7 @@ private:
  */
 inline void gpgc_encode_64(gpgc_encoder* _gpe, const gpgc_vector* serialized_vector) {
     memcpy(&_gpe->bytestream[(_gpe->p)], serialized_vector, sizeof(struct gpgc_vector));
-    _gpe->p += 7;
+    _gpe->p += sizeof(struct gpgc_vector);
     /*
 	_gpe->bytestream[(_gpe->p) += 2] = (serialized_vector[0]);
 	_gpe->bytestream[(_gpe->p) += 2] = (serialized_vector[1]);
