@@ -150,7 +150,7 @@ int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, 
 
 	// Define our encoding object, set the initial pointer to be right after magic and header 
     gpgc_encoder gpe{
-            (char*) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width) * 2),
+            (char*) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
             GPGC_HEADER_SIZE
     };
 
