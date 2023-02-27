@@ -97,7 +97,7 @@ struct gpgc_vector{
 	half_float::half i, j;
     u_int16_t k;
     u_int8_t size;
-};
+} __attribute__((packed));
 
 /*
  * Structure containing information about mosaic fragment locations
