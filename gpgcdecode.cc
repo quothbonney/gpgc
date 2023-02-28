@@ -38,13 +38,15 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
         memcpy(bblock, &x, sizeof(struct gpgc_vector));
 
         p_sz = (u_int16_t) ((0xFFFF000000000000 & *bblock) >> 48);
+        p_sz = (u_int16_t) ( *bblock >> 48 ) & 0xFF;
         k = (u_int16_t) ((0x0000FFFF00000000 & *bblock) >> 32);
+        k = (u_int16_t) ( *bblock >> 32 ) & 0xFFFF;
         // Half precision float library wont allow direct recast to float
         // Memory must be manually bitshifted. This puts the representation of
         // the half float into a 16 bit integer and then forces it into a half-
         // float container
-        auto j_int = (int16_t) ((0x00000000FFFF0000 & *bblock) >> 16);
-        auto i_int = (int16_t) ((0x000000000000FFFF & *bblock) >> 0);
+        auto j_int = (u_int16_t) ( *bblock >> 16 ) & 0xFFFF;
+        auto i_int = (u_int16_t) ( *bblock >> 0 ) & 0xFFFF;
 
         memcpy(&i, &i_int, sizeof(i));
         memcpy(&j, &j_int, sizeof(i));
