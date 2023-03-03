@@ -53,10 +53,9 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
 		filled_size += size*size;
 		num_nodes++;
 
-
-        uint16_t encoded_int[4];
+        gpgc_vector encoded_int;
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
-        gpgc_encode_64(_gpe, encoded_int);
+        gpgc_encode_64(_gpe, &encoded_int);
         gpgc_easy_write(_gpe, *_encoded_vector, size);
     
 		if(_gpe->p % 10) {
@@ -110,7 +109,7 @@ gpgc_vector gpgc_partition::fit_vector(const int* block) {
     Eigen::Vector3f x = (eigen_matrix_A.transpose()).cast<float>().householderQr().solve((eigen_vector_B).cast<float>());
 
     using half_float::half;
-    gpgc_vector short_vector{(half)x[0], (half)x[1], (u_int16_t)std::max(x[2],0.f), (uint16_t)level};
+    gpgc_vector short_vector{(half)x[0], (half)x[1], (u_int16_t)std::max(x[2],0.f), (uint8_t)level};
 
 	delete arr_A;
 	delete arr_B;
@@ -150,7 +149,7 @@ int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, 
 
 	// Define our encoding object, set the initial pointer to be right after magic and header 
     gpgc_encoder gpe{
-            (uint16_t*) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
+            (char*) malloc(GPGC_HEADER_SIZE + (_dat.height * _dat.width)),
             GPGC_HEADER_SIZE
     };
 

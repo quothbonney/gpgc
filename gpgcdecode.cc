@@ -8,7 +8,7 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 
 	gpgc_header_t header{};
 
-	uint64_t x;
+	gpgc_vector x;
 	
 	uint32_t x_header;
 	gpgc_file.read(reinterpret_cast<char*>(&x_header), sizeof(uint32_t));
@@ -26,31 +26,33 @@ gpgc_vector* gpgc_read(const char* filename, gpgc_header_t* head) {
 
 	*head = header;
 
-	gpgc_vector* decomp_nodes = new gpgc_vector[header.node_count];
+	gpgc_vector* decomp_nodes = new gpgc_vector[2 * header.node_count];
 
     gpgc_file.seekg(2*GPGC_HEADER_SIZE, std::ios::beg);
 	size_t index = 0;
-    while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(uint64_t))) {
-		half_float::half i, j;
-		u_int16_t k;
-		u_int16_t p_sz;
-		u_int64_t* bblock = new uint64_t[4];
-		memcpy(bblock, &x, sizeof(struct gpgc_vector));
-    
-		p_sz = (u_int16_t) ((0xFFFF000000000000 & bblock[0]) >> 48);
-		k = (u_int16_t) ((0x0000FFFF00000000 & bblock[0]) >> 32);
-		// Half precision float library wont allow direct recast to float
-		// Memory must be manually bitshifted. This puts the representation of
-		// the half float into a 16 bit integer and then forces it into a half-
-		// float container
-		auto j_int = (int16_t) ((0x00000000FFFF0000 & bblock[0]) >> 16);
-		auto i_int = (int16_t) ((0x000000000000FFFF & bblock[0]) >> 0);
+    while (gpgc_file.read(reinterpret_cast<char*>(&x), sizeof(struct gpgc_vector))) {
+        half_float::half i, j;
+        u_int16_t k;
+        u_int16_t p_sz;
+        u_int64_t* bblock = new u_int64_t;
+        memcpy(bblock, &x, sizeof(struct gpgc_vector));
 
-		memcpy(&i, &i_int, sizeof(i));
-		memcpy(&j, &j_int, sizeof(i));
+        p_sz = (u_int16_t) ((0xFFFF000000000000 & *bblock) >> 48);
+        p_sz = (u_int16_t) ( *bblock >> 48 ) & 0xFF;
+        k = (u_int16_t) ((0x0000FFFF00000000 & *bblock) >> 32);
+        k = (u_int16_t) ( *bblock >> 32 ) & 0xFFFF;
+        // Half precision float library wont allow direct recast to float
+        // Memory must be manually bitshifted. This puts the representation of
+        // the half float into a 16 bit integer and then forces it into a half-
+        // float container
+        auto j_int = (u_int16_t) ( *bblock >> 16 ) & 0xFFFF;
+        auto i_int = (u_int16_t) ( *bblock >> 0 ) & 0xFFFF;
 
-		decomp_nodes[index] = gpgc_vector{i, j, k, (u_int16_t)p_sz};
-		delete[] bblock;
+        memcpy(&i, &i_int, sizeof(i));
+        memcpy(&j, &j_int, sizeof(i));
+
+        decomp_nodes[index] = gpgc_vector{i, j, k, (u_int8_t)p_sz};
+        delete[] bblock;
         index++;
     }
 

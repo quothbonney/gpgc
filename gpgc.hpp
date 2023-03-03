@@ -96,8 +96,8 @@ struct gpgc_header_t {
 struct gpgc_vector{
 	half_float::half i, j;
     u_int16_t k;
-    u_int16_t size;
-};
+    u_int8_t size;
+} __attribute__((packed));
 
 /*
  * Structure containing information about mosaic fragment locations
@@ -130,7 +130,7 @@ typedef struct {
  * entered. ez_enc is for python `.gpgc.log` output, allowing for UTF-8 unpackinig and simple analysis.
  */
 typedef struct {
-   uint16_t* bytestream;
+   char* bytestream;
    int p;
    std::ofstream ez_enc;
 } gpgc_encoder;
@@ -181,11 +181,15 @@ private:
  * Relies on data to be 64-bit, as it is bitshifted into 4 16 bit fragments.
  * Bitwise AND for each two bytes of the serialized vector which are then bitshifted into the correct place
  */
-inline void gpgc_encode_64(gpgc_encoder* _gpe, const uint16_t serialized[]) {
-	_gpe->bytestream[(_gpe->p)++] = (serialized[0]);
-	_gpe->bytestream[(_gpe->p)++] = (serialized[1]);
-	_gpe->bytestream[(_gpe->p)++] = (serialized[2]);
-	_gpe->bytestream[(_gpe->p)++] = (serialized[3]);
+inline void gpgc_encode_64(gpgc_encoder* _gpe, const gpgc_vector* serialized_vector) {
+    memcpy(&_gpe->bytestream[(_gpe->p)], serialized_vector, sizeof(struct gpgc_vector));
+    _gpe->p += sizeof(struct gpgc_vector);
+    /*
+	_gpe->bytestream[(_gpe->p) += 2] = (serialized_vector[0]);
+	_gpe->bytestream[(_gpe->p) += 2] = (serialized_vector[1]);
+	_gpe->bytestream[(_gpe->p) += 2] = (serialized_vector[2]);
+	_gpe->bytestream[(_gpe->p)++] = lvl;
+     */
 }
 
 /*
