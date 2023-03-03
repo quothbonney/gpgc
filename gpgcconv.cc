@@ -34,7 +34,22 @@ int gpgc2png(char* inname, char* outname) {
     }
 #endif
     save_png(outname, raster, decoded_head.width, decoded_head.height);
-	std::cout << outname;
+	std::cout << outname << std::endl;
+	delete dcmp_nodes;
+	delete[] raster;
+    return 0;
+}
+
+int gpgc2benchmark(char* inname) {
+    gpgc_header_t decoded_head;
+    gpgc_vector* dcmp_nodes = gpgc_read(inname, &decoded_head);
+
+    std::vector<float> x0, y0;
+    int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);
+
+    int** raster = gpgc_reconstruct(dcmp_nodes, decoded_head, x0, y0);
+	delete dcmp_nodes;
+	delete[] raster;
     return 0;
 }
 
@@ -68,6 +83,9 @@ int main(int argc, char **argv) {
 	}
 
 	if(is_verbose) std::cout.rdbuf(NULL);
+
+	if(STR_ENDS_WITH(argv[1], ".gpgc") && strcmp(argv[2], "GPGC_BENCHMARK"))
+		gpgc2benchmark(argv[1]);
 	
 	if(STR_ENDS_WITH(argv[1], ".tif") && STR_ENDS_WITH(argv[2], ".gpgc"))
 		tif2gpgc(argv[1], argv[2], zeta, mu, max_error);
