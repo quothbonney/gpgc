@@ -15,7 +15,11 @@ endif()
 
 include_directories(${PNG_INCLUDE_DIR})
 add_compile_options(-g)
+
+add_subdirectory(test)
+
 add_executable(gpgcconv gpgcconv.cc gpgclinearalgebra.c gpgcencode.cc gpgcutil.cc gpgcdecode.cc)
 
 target_link_libraries(gpgcconv PRIVATE GDAL::GDAL Eigen3::Eigen ${PNG_LIBRARY})
 target_compile_features(gpgcconv PRIVATE cxx_std_17)
+

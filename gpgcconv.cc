@@ -1,6 +1,5 @@
 #include "gpgc.hpp"
 #include <cstdlib>
-#include <thread>
 
 //#define __GPGC_DEBUG_VERBOSE
 
