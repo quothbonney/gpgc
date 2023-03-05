@@ -19,8 +19,21 @@ TEST_CASE("GPGC Encode Binary Completes") {
         gpgc_encode(const_cast<char *>(testfile), "./test_output.gpgc", dat, 0.2, 5, true);
         std::uintmax_t filesize1 = std::filesystem::file_size("./test_output.gpgc");
         CHECK(filesize1 > 200);
-    }
-    std::cout.rdbuf(old_cout);
-    std::filesystem::remove("./test_output.gpgc");
 
+
+        gpgc_header_t decoded_head;
+        gpgc_vector* dcmp_nodes = gpgc_read("./test_output.gpgc", &decoded_head);
+
+        std::vector<float> x0, y0;
+        int tmp = gpgc_decode_offsets(dcmp_nodes, decoded_head, x0, y0);
+
+        int** raster = gpgc_reconstruct(dcmp_nodes, decoded_head, x0, y0);
+
+        delete dcmp_nodes;
+        delete[] raster;
+        std::cout.rdbuf(old_cout);
+        CHECK(filesize1 > 200);
+        std::cout.rdbuf(nullstream.rdbuf());
+    }
+    std::filesystem::remove("./test_output.gpgc");
 }

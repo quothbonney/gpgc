@@ -13,10 +13,12 @@ else(GDAL_FOUND)
     message(WARNING "GDAL NOT FOUND. Skipping GDAL package build...")
 endif()
 
+add_subdirectory(extern/pybind11)
 include_directories(${PNG_INCLUDE_DIR})
 add_compile_options(-g)
 
 add_subdirectory(test)
+add_subdirectory(interface)
 
 add_executable(gpgcconv gpgcconv.cc gpgclinearalgebra.c gpgcencode.cc gpgcutil.cc gpgcdecode.cc)
 
