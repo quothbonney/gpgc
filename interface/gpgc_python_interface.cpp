@@ -53,12 +53,23 @@ int add(int i, int j) {
 
 
 PYBIND11_MODULE(example, m) {
-   py::class_<gpgc_gdal_data>(m, "gpgc_gdal_data")
-           .def("__repr__",
-                [](const gpgc_gdal_data &a) {
-               return "<gpgc_gdal_data>";
-           });
+    py::class_<gpgc_gdal_data>(m, "gpgc_gdal_data")
+            .def("__repr__",
+                 [](const gpgc_gdal_data &a) {
+                     return "<gpgc_gdal_data>";
+                 });
 
+    py::class_<gpgc_encoder>(m, "gpgc_encoder")
+            .def("__repr__",
+                 [](const gpgc_encoder &a) {
+                     return "<gpgc_encoder>";
+                 });
 
-   m.def("gpgc_encode", [](char* filename))
+    m.def("process_tif", [](char* filename) {
+        return process_file(filename);
+    });
+
+    m.def("gpgc_encode", [](char* filename, gpgc_gdal_data _dat, const float zeta, const int mu, bool max_error) {
+        return gpgc_encode_bytes(filename, _dat, zeta, mu, max_error);
+    });
 }
