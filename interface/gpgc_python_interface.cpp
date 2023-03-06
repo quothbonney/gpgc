@@ -47,10 +47,18 @@ gpgc_encoder gpgc_encode_bytes(char* filename, const gpgc_gdal_data& _dat, const
     return gpe;
 }
 
-int add(int i, int j) {
-    return i + j;
-}
 
+gpgc_vector* gpgc_read(gpgc_encoder _gpe) {
+    int p_size = _gpe.p / sizeof(struct gpgc_vector);
+
+    gpgc_vector* dc_vectors = new gpgc_vector[p_size];
+    for(int i = 0; i < p_size; ++i) {
+        int position = i * sizeof(struct gpgc_vector);
+        memcpy(&dc_vectors[i], &_gpe.bytestream[position], sizeof(struct gpgc_vector));
+    }
+
+    return dc_vectors;
+}
 
 PYBIND11_MODULE(example, m) {
     py::class_<gpgc_gdal_data>(m, "gpgc_gdal_data")
