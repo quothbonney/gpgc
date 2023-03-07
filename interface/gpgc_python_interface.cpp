@@ -1,8 +1,11 @@
 //
-// Created by quothbonney on 3/5/23.
+// Created by Jack Carson on 3/5/23.
 //
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/numpy.h>
+
 #include "../gpgc.hpp"
 
 namespace py = pybind11;
@@ -47,20 +50,50 @@ gpgc_encoder gpgc_encode_bytes(char* filename, const gpgc_gdal_data& _dat, const
     return gpe;
 }
 
+py::tuple node_vector_to_tuple(const gpgc_vector& p) {
+    float i = p.i;
+    float j = p.j;
+    return py::make_tuple(i, j, p.k, p.size);
+}
 
-gpgc_vector* gpgc_read(gpgc_encoder _gpe) {
+std::vector<py::tuple> gpgc_read_to_python(gpgc_encoder _gpe) {
     int p_size = _gpe.p / sizeof(struct gpgc_vector);
 
-    gpgc_vector* dc_vectors = new gpgc_vector[p_size];
+    std::vector<py::tuple> dc_vectors;
     for(int i = 0; i < p_size; ++i) {
         int position = i * sizeof(struct gpgc_vector);
-        memcpy(&dc_vectors[i], &_gpe.bytestream[position], sizeof(struct gpgc_vector));
+        gpgc_vector* v = new gpgc_vector;
+        memcpy(v, &_gpe.bytestream[position], sizeof(struct gpgc_vector));
+        dc_vectors.push_back(node_vector_to_tuple(*v));
     }
 
     return dc_vectors;
 }
 
+py::array_t<double> decoded_vectors_to_numpy(const std::vector<py::tuple>& decoded_vectors) {
+    auto size = decoded_vectors.size();
+    auto numpy_array = py::array_t<double>(size);
+    auto numpy_array_data = numpy_array.mutable_data();
+
+    for(size_t i = 0; i < size; ++i) {
+        auto tuple = decoded_vectors[i];
+        numpy_array_data[i] =
+                py::cast<double>(tuple[0]) +
+                py::cast<double>(tuple[1]) +
+                py::cast<double>(tuple[2]) +
+                py::cast<double>(tuple[3]);
+    }
+    return numpy_array;
+}
+
 PYBIND11_MODULE(example, m) {
+    py::class_<gpgc_vector>(m, "gpgc_vector")
+            .def(py::init<half_float::half, half_float::half, int, int>())
+            .def_readwrite("i", &gpgc_vector::i)
+            .def_readwrite("j", &gpgc_vector::j)
+            .def_readwrite("k", &gpgc_vector::k)
+            .def_readwrite("size", &gpgc_vector::size);
+
     py::class_<gpgc_gdal_data>(m, "gpgc_gdal_data")
             .def("__repr__",
                  [](const gpgc_gdal_data &a) {
