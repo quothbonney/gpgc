@@ -1,4 +1,6 @@
+#include "gpgc_python_interface.hpp"
 
+namespace py = pybind11;
 
 PYBIND11_MODULE(example, m) {
     py::class_<gpgc_vector>(m, "gpgc_vector")
