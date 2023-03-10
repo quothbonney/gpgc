@@ -3,14 +3,20 @@ project(gpgc_pybind)
 
 find_package(Python3 COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG)
-
 find_package(GDAL REQUIRED)
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-pybind11_add_module(example gpgc_python_interface.cpp gpgc_python_implementation.cpp  ../../gpgcconv.cc ../../gpgclinearalgebra.c ../../gpgcencode.cc ../../gpgcutil.cc ../../gpgcdecode.cc)
+set (CMAKE_CXX_FLAGS "-lstdc++fs -std=c++17")
+# create a library containing the source files and libraries
+add_library(gpgclib STATIC ../../gpgcconv.cc ../../gpgclinearalgebra.c ../../gpgcencode.cc ../../gpgcutil.cc ../../gpgcdecode.cc)
+target_link_libraries(gpgclib PRIVATE GDAL::GDAL Eigen3::Eigen ${PNG_LIBRARY})
 
-add_compile_options(-g)
-add_custom_target(python_tests
-        SOURCES gpgc_interface_test.cpp)
-target_link_libraries(example PRIVATE GDAL::GDAL Eigen3::Eigen ${PNG_LIBRARY})
-target_compile_features(example PRIVATE cxx_std_17)
+# create the pybind11 module
+pybind11_add_module(example gpgc_python_interface.cpp gpgc_python_implementation.cpp)
+target_link_libraries(example PRIVATE gpgclib)
+
+# create the testing binary
+include_directories(${PYTHON_INCLUDE_DIRS})
+add_executable(gpgc_python_test gpgc_interface_test.cpp)
+target_link_libraries(gpgc_python_test PRIVATE gpgclib)
+target_link_libraries(gpgc_python_test PRIVATE GDAL::GDAL ${PYTHON_LIBRARIES} Eigen3::Eigen ${PNG_LIBRARY})

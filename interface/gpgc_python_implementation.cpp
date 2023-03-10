@@ -62,7 +62,7 @@ std::vector<py::tuple> gpgc_read_to_python(const gpgc_encoder& _gpe) {
         gpgc_vector *v = new gpgc_vector;
         memcpy(v, &_gpe.bytestream[position], sizeof(struct gpgc_vector));
         dc_vectors.push_back(node_vector_to_tuple(*v));
-        std::cout << v->i << " " << v->j << " " << v-> k << " " << v->size;
+        std::cout << v->i << " " << v->j << " " << v-> k << " " << v->size << "\n";
     }
 
     return dc_vectors;
