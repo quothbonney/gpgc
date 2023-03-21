@@ -3,11 +3,8 @@
 
 #define GPGC_SKIP_BITSHIFTS 5
 
-gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level)
-        : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) , level(_level) {
-    if(gpgc_compression_paramters::num_nodes == 70) {
-        std::cout << "test";
-    }
+gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level, gpgc_compression_paramters _param)
+        : size(_size), xOff(_xoff), yOff(_yoff) , bmp(rasterBMP) , level(_level), param(&_param) {
     const int* _partition_block = get_block();
     const gpgc_vector fit = fit_vector(_partition_block);
     float entropy = get_entropy(fit, _partition_block);
@@ -16,17 +13,14 @@ gpgc_partition::gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** raste
 }
 
 float gpgc_partition::get_entropy(const gpgc_vector& vec, const int* block) const {
-	using namespace gpgc_compression_paramters;
     unsigned long long info = 0;
     for(size_t row = 0; row < size; ++row) {
         for(size_t cell = 0; cell < size; ++cell) {
             float expected = (vec.i * row) + (vec.j * cell) + vec.k; // In form ax_by_z for vector
             float cell_diff = expected - bmp[yOff + row][xOff + cell]; // Get difference
-            if(gpgc_max_error != 0) {
-                if(cell_diff > gpgc_max_error && size > 4)
-                    return 32767.f;
-            }
-            float score = std::abs(cell_diff / gpgc_mu);
+            if(cell_diff > 50 && size > 4)
+                return 32767.f;
+            float score = std::abs(cell_diff / param->mu);
             float P_ak = inverse_z_transform(score);
             // Max to avoid negative info
             float point_info = fmax(0.0, -1 * std::log2(2.56*P_ak)); // Shannon info formula
@@ -41,17 +35,16 @@ float gpgc_partition::get_entropy(const gpgc_vector& vec, const int* block) cons
 }
 
 void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector) {
-	using namespace gpgc_compression_paramters;
-    if(entropy > gpgc_zeta &&  size >= 4) {
+    if(entropy > param->zeta &&  size >= 4) {
         int new_size = size / 2;
         level++;
-        gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe, level);
-        gpgc_partition child2 = gpgc_partition(new_size, xOff + new_size, yOff, bmp, _gpe, level);
-        gpgc_partition child3 = gpgc_partition(new_size, xOff, yOff + new_size, bmp, _gpe, level);
-        gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe, level);
+        gpgc_partition child1 = gpgc_partition(new_size, xOff, yOff, bmp, _gpe, level, *param);
+        gpgc_partition child2 = gpgc_partition(new_size, xOff + new_size, yOff, bmp, _gpe, level, *param);
+        gpgc_partition child3 = gpgc_partition(new_size, xOff, yOff + new_size, bmp, _gpe, level, *param);
+        gpgc_partition child4 = gpgc_partition(new_size, xOff + new_size, yOff + new_size, bmp, _gpe, level, *param);
     } else {
-		filled_size += size*size;
-		num_nodes++;
+		param->filled_size += size*size;
+		param->num_nodes++;
 
         gpgc_vector encoded_int;
         memcpy(&encoded_int, _encoded_vector, sizeof(struct gpgc_vector));
@@ -59,7 +52,7 @@ void gpgc_partition::subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_
         gpgc_easy_write(_gpe, *_encoded_vector, size);
     
 		if(_gpe->p % 10) {
-			float prog = (float)gpgc_compression_paramters::filled_size / gpgc_compression_paramters::raster_size;
+			float prog = (float)param->filled_size / param->raster_size;
 			print_progress(prog);
 		}
         std::cout << "\nEncoded leaf node with size " << size << " at " << xOff << " " << yOff <<  ". Entropy=" << entropy << "\033[A\r";
@@ -160,14 +153,18 @@ int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, 
 			0
     };
 
+    gpgc_compression_paramters param {
+            max_error * 50,
+            mu,
+            zeta,
+            _dat.height * _dat.width,
+            0,
+            0
+    };
+
 	// Define the compression parameters in the static namespace to be accessed by the encoder
 	// There may be a better method for this, but I don't know it
 	
-	gpgc_compression_paramters::gpgc_mu        = mu;
-	// If max_error is true (1), define it to be equal to GPGC_MAX_ERROR
-	gpgc_compression_paramters::gpgc_max_error = max_error * GPGC_MAX_ERROR;
-	gpgc_compression_paramters::gpgc_zeta	   = zeta;
-	gpgc_compression_paramters::num_nodes	   = 0;
 
 	// Initialize mosaicing system fragments in std::vector to be accessed later and compressed individually
 
@@ -180,10 +177,10 @@ int gpgc_encode(char* filename, char* out_filename, const gpgc_gdal_data& _dat, 
 
     uint16_t** rasterBMP = gpgc_read_DEM(&_dat);
 
-	gpgc_compression_paramters::raster_size = magic_header.height * magic_header.width;
+	param.raster_size = magic_header.height * magic_header.width;
 
-    gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe, 0);
-	magic_header.node_count = gpgc_compression_paramters::num_nodes;
+    gpgc_partition(_dat.height, 0, 0, rasterBMP, &gpe, 0, param);
+	magic_header.node_count = param.num_nodes;
 
 	memcpy(gpe.bytestream, &magic_header, sizeof(struct gpgc_header_t));
 

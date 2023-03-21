@@ -63,17 +63,17 @@
 
 #define GPGC_MAX_ERROR 50
 
-namespace gpgc_compression_paramters {
-	static int gpgc_max_error;
-	static int gpgc_mu;
-	static float gpgc_zeta;
+struct gpgc_compression_paramters {
+	int max_error;
+	int mu;
+	float zeta;
 	
 	// Used for progress bar
-	static long raster_size;
-	static long filled_size;
+	long raster_size;
+	long filled_size;
 
-	static int num_nodes;
-}
+	int num_nodes;
+};
 
 /*
  * Header for GPGC files providing information about how to read, size, bands, and location metadata
@@ -158,7 +158,8 @@ struct gpgc_partition {
 
 	uint16_t** bmp; // Raw raster data passed by pointer for use
 
-	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level);
+
+	gpgc_partition(int _size, int _xoff, int _yoff, uint16_t** rasterBMP, gpgc_encoder* encoder_data, int _level, gpgc_compression_paramters _param);
 
 private:
 	// Returns area for partition in a concatenated int*
@@ -174,6 +175,8 @@ private:
 
 	// Decides whether to partition based on entropy value. If no partition, it is encoded into the bytestream
 	void subpartition(float entropy, gpgc_encoder* _gpe, const gpgc_vector* _encoded_vector);
+
+    gpgc_compression_paramters* param;
 };
 
 /*

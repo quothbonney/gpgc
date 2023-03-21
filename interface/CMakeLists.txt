@@ -17,6 +17,6 @@ target_link_libraries(example PRIVATE gpgclib)
 
 # create the testing binary
 include_directories(${PYTHON_INCLUDE_DIRS})
-add_executable(gpgc_python_test gpgc_interface_test.cpp)
+add_executable(gpgc_python_test gpgc_interface_test.cpp gpgc_interface_test.cpp gpgc_python_implementation.cpp)
 target_link_libraries(gpgc_python_test PRIVATE gpgclib)
 target_link_libraries(gpgc_python_test PRIVATE GDAL::GDAL ${PYTHON_LIBRARIES} Eigen3::Eigen ${PNG_LIBRARY})
